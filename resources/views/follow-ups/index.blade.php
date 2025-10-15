@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', '{{ __("follow_ups.my_follow_ups") }} - CRM Academy')
+@section('title', __("follow_ups.my_follow_ups") . ' - CRM Academy')
 
 @section('content')
 <div class="row">
@@ -57,7 +57,7 @@
                 <div class="card text-white bg-success">
                     <div class="card-body text-center">
                         <i class="fas fa-user-check fa-2x mb-2"></i>
-                        <h4 class="card-title">{{ $stats['by_status']['Expected to Register'] ?? 0 }}</h4>
+                        <h4 class="card-title">{{ $stats['by_status']['expected'] ?? 0 }}</h4>
                         <p class="card-text">{{ __('follow_ups.expected_to_register') }}</p>
                     </div>
                 </div>
@@ -66,7 +66,7 @@
                 <div class="card text-white bg-warning">
                     <div class="card-body text-center">
                         <i class="fas fa-pause fa-2x mb-2"></i>
-                        <h4 class="card-title">{{ $stats['by_status']['Postponed'] ?? 0 }}</h4>
+                        <h4 class="card-title">{{ $stats['by_status']['postponed'] ?? 0 }}</h4>
                         <p class="card-text">{{ __('follow_ups.postponed') }}</p>
                     </div>
                 </div>
@@ -100,7 +100,7 @@
                             </thead>
                             <tbody>
                                 @foreach($todayFollowUps as $followUp)
-                                <tr class="{{ $followUp->status === 'Expected to Register' ? 'table-success' : '' }}">
+                                <tr class="{{ strtolower($followUp->status_label) === strtolower('Expected to Register') ? 'table-success' : '' }}">
                                     <td>
                                         <span class="badge bg-{{ $followUp->priority_color }}">
                                             {{ $followUp->priority_label }}
@@ -146,6 +146,10 @@
                                             <a href="tel:{{ $followUp->student->phone_primary }}" 
                                                class="btn btn-outline-success" title="{{ __('follow_ups.call') }}">
                                                 <i class="fas fa-phone"></i>
+                                            </a>
+                                            <a href="{{ route('follow-ups.edit', $followUp) }}" 
+                                               class="btn btn-outline-warning" title="{{ __('common.edit') }}">
+                                                <i class="fas fa-edit"></i>
                                             </a>
                                             <button type="button" class="btn btn-outline-primary" 
                                                     title="{{ __('follow_ups.add_follow_up') }}"
@@ -237,18 +241,26 @@
                                     <small>{{ Str::limit($followUp->action_note, 50) }}</small>
                                 </td>
                                 <td>
-                                    <small>{{ $followUp->next_follow_up_date->format('M d, Y') }}</small>
+                                    <small>{{ $followUp->next_follow_up_date ? $followUp->next_follow_up_date->format('M d, Y') : '-' }}</small>
                                 </td>
                                 <td>
-                                    <span class="badge bg-danger">
-                                        {{ $followUp->next_follow_up_date->diffInDays(now()) }} {{ __('follow_ups.days') }}
-                                    </span>
+                                    @if($followUp->next_follow_up_date)
+                                        <span class="badge bg-danger">
+                                            {{ $followUp->next_follow_up_date->diffInDays(now()) }} {{ __('follow_ups.days') }}
+                                        </span>
+                                    @else
+                                        <span class="badge bg-secondary">-</span>
+                                    @endif
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
                                         <a href="tel:{{ $followUp->student->phone_primary }}" 
                                            class="btn btn-outline-success" title="{{ __('follow_ups.call') }}">
                                             <i class="fas fa-phone"></i>
+                                        </a>
+                                        <a href="{{ route('follow-ups.edit', $followUp) }}" 
+                                           class="btn btn-outline-warning" title="{{ __('common.edit') }}">
+                                            <i class="fas fa-edit"></i>
                                         </a>
                                         <button type="button" class="btn btn-outline-primary" 
                                                 title="{{ __('follow_ups.add_follow_up') }}"
@@ -284,7 +296,102 @@
                 @csrf
                 <input type="hidden" id="modal_student_id" name="student_id">
                 <div class="modal-body">
-                    <!-- Form content will be loaded here -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="modal_scheduled_date" class="form-label">{{ __('follow_ups.scheduled_date') }} <span class="text-danger">*</span></label>
+                            <input type="datetime-local" class="form-control" id="modal_scheduled_date" name="scheduled_date" value="{{ now()->addHour()->format('Y-m-d\TH:i') }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="modal_priority" class="form-label">{{ __('common.priority') }} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="modal_priority" name="priority" required>
+                                <option value="">{{ __('common.select_option') }}</option>
+                                @foreach(\App\Models\FollowUp::getPriorities() as $value => $label)
+                                    <option value="{{ $value }}">{{ __('common.' . $value) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="modal_contact_method" class="form-label">{{ __('follow_ups.contact_method') }} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="modal_contact_method" name="contact_method" required>
+                                <option value="">{{ __('common.select_option') }}</option>
+                                <option value="phone">{{ __('common.phone_call') }}</option>
+                                <option value="whatsapp">{{ __('common.whatsapp') }}</option>
+                                <option value="email">{{ __('common.email') }}</option>
+                                <option value="in_person">{{ __('common.in_person') }}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="modal_type" class="form-label">{{ __('follow_ups.follow_up_type') }} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="modal_type" name="type" required>
+                                <option value="">{{ __('follow_ups.select_type') }}</option>
+                                <option value="initial_contact">{{ __('follow_ups.initial_contact') }}</option>
+                                <option value="course_inquiry">{{ __('follow_ups.course_inquiry') }}</option>
+                                <option value="payment_reminder">{{ __('follow_ups.payment_reminder') }}</option>
+                                <option value="enrollment_follow_up">{{ __('follow_ups.enrollment_follow_up') }}</option>
+                                <option value="customer_service">{{ __('follow_ups.customer_service') }}</option>
+                                <option value="other">{{ __('follow_ups.other') }}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="modal_department" class="form-label">{{ __('common.department') }}</label>
+                            <select class="form-select" id="modal_department" name="department">
+                                <option value="">{{ __('common.select_department') }}</option>
+                                @isset($departments)
+                                    @foreach($departments as $dept)
+                                        <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                    @endforeach
+                                @endisset
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="modal_course_id" class="form-label">{{ __('follow_ups.related_course') }}</label>
+                            <select class="form-select" id="modal_course_id" name="course_id">
+                                <option value="">{{ __('follow_ups.select_course') }}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modal_purpose" class="form-label">{{ __('follow_ups.purpose_agenda') }} <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="modal_purpose" name="purpose" rows="2" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modal_notes" class="form-label">{{ __('follow_ups.additional_notes') }}</label>
+                        <textarea class="form-control" id="modal_notes" name="notes" rows="2"></textarea>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="modal_status" class="form-label">{{ __('common.status') }}</label>
+                            <select class="form-select" id="modal_status" name="status">
+                                <option value="pending">Pending</option>
+                                <option value="postponed">Postponed</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6" id="next_follow_up_group" style="display:none;">
+                            <label for="modal_next_follow_up_date" class="form-label">{{ __('follow_ups.next_follow_up') }}</label>
+                            <input type="date" class="form-control" id="modal_next_follow_up_date" name="next_follow_up_date">
+                        </div>
+                    </div>
+                    <div class="row mb-3" id="cancellation_group" style="display:none;">
+                        <div class="col-md-6">
+                            <label for="modal_cancellation_reason" class="form-label">{{ __('follow_ups.cancellation_reason') }}</label>
+                            <select class="form-select" id="modal_cancellation_reason" name="cancellation_reason">
+                                <option value="">{{ __('follow_ups.select_reason') }}</option>
+                                @foreach(\App\Models\FollowUp::getCancellationReasons() as $reason)
+                                    <option value="{{ $reason }}">{{ $reason }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="modal_cancellation_details" class="form-label">{{ __('follow_ups.cancellation_details') }}</label>
+                            <textarea class="form-control" id="modal_cancellation_details" name="cancellation_details" rows="1"></textarea>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
@@ -300,13 +407,7 @@
 <script>
 function openQuickFollowUp(studentId) {
     $('#modal_student_id').val(studentId);
-    
-    // Load the form content via AJAX
-    $.get(`{{ route('follow-ups.create') }}?student_id=${studentId}`)
-        .done(function(response) {
-            $('#quickFollowUpModal .modal-body').html($(response).find('.modal-body').html());
-            $('#quickFollowUpModal').modal('show');
-        });
+    $('#quickFollowUpModal').modal('show');
 }
 
 $('#quickFollowUpForm').on('submit', function(e) {
@@ -345,19 +446,39 @@ $(document).on('change', '#modal_status', function() {
     const nextFollowUpGroup = $('#next_follow_up_group');
     const cancellationGroup = $('#cancellation_group');
     
-    if (status === 'Postponed') {
+    if (status === 'postponed') {
         nextFollowUpGroup.show().find('input').prop('required', true);
         cancellationGroup.hide().find('select, textarea').prop('required', false);
-    } else if (status === 'Cancelled') {
+    } else if (status === 'cancelled') {
         cancellationGroup.show().find('select').prop('required', true);
         nextFollowUpGroup.hide().find('input').prop('required', false);
-    } else if (status === 'Expected to Register') {
-        nextFollowUpGroup.show().find('input').prop('required', false);
-        cancellationGroup.hide().find('select, textarea').prop('required', false);
     } else {
         nextFollowUpGroup.hide().find('input').prop('required', false);
         cancellationGroup.hide().find('select, textarea').prop('required', false);
     }
+});
+
+// Department -> courses linkage in modal
+$(document).on('change', '#modal_department', function() {
+    const deptId = $(this).val();
+    const courseSelect = $('#modal_course_id');
+    courseSelect.html('<option value="">{{ __('follow_ups.select_course') }}</option>');
+    if (!deptId) return;
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    fetch(`/api/courses-by-category?category_id=${deptId}`, {
+        headers: { 'X-CSRF-TOKEN': csrfToken }
+    })
+    .then(r => r.json())
+    .then(list => {
+        list.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.name;
+            courseSelect.append(opt);
+        });
+    })
+    .catch(() => {});
 });
 </script>
 @endpush

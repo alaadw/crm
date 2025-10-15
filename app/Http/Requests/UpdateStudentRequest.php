@@ -39,6 +39,9 @@ class UpdateStudentRequest extends FormRequest
             'reach_source' => 'required|in:Social Media,University Circular,Purchased Data,Referral,Old Student,Other',
             'department' => 'required|exists:categories,id',
             'preferred_course_id' => 'nullable|exists:courses,id',
+            'university' => 'nullable|string|max:255',
+            'major' => 'nullable|string|max:255',
+            'college' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:1000',
         ];
     }
@@ -64,6 +67,9 @@ class UpdateStudentRequest extends FormRequest
             'department.required' => __('students.department_required'),
             'department.exists' => __('students.department_invalid'),
             'preferred_course_id.exists' => __('students.preferred_course_invalid'),
+            'university.max' => __('students.university_max'),
+            'major.max' => __('students.major_max'),
+            'college.max' => __('students.college_max'),
             'notes.max' => __('students.notes_max'),
         ];
     }
@@ -83,6 +89,9 @@ class UpdateStudentRequest extends FormRequest
             'reach_source' => __('students.how_did_they_reach_us'),
             'department' => __('students.department'),
             'preferred_course_id' => __('students.preferred_course'),
+            'university' => __('students.university'),
+            'major' => __('students.major'),
+            'college' => __('students.college'),
             'notes' => __('students.notes'),
         ];
     }

@@ -82,7 +82,11 @@ return [
     'info' => 'معلومات',
     'no_data' => 'لا توجد بيانات',
     'loading' => 'جاري التحميل...',
+    'error_loading' => 'خطأ في تحميل البيانات',
     'please_wait' => 'يرجى الانتظار...',
+    'import_completed' => 'تم إكمال الاستيراد.',
+    'file_required' => 'يرجى اختيار ملف للرفع.',
+    'file_type_invalid' => 'نوع الملف غير صالح. يرجى رفع ملف إكسل (.xlsx) أو CSV.',
 
     // Validation
     'required' => 'مطلوب',

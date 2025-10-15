@@ -82,7 +82,11 @@ return [
     'info' => 'Information',
     'no_data' => 'No data found',
     'loading' => 'Loading...',
+    'error_loading' => 'Error loading data',
     'please_wait' => 'Please wait...',
+    'import_completed' => 'Import completed.',
+    'file_required' => 'Please select a file to upload.',
+    'file_type_invalid' => 'Invalid file type. Please upload an Excel (.xlsx) or CSV file.',
 
     // Validation
     'required' => 'Required',

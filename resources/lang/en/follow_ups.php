@@ -109,6 +109,8 @@ return [
     'pending' => 'Pending',
     'completed' => 'Completed',
     'cancelled' => 'Cancelled',
+    'registered' => 'Registered',
+    'expected_to_register' => 'Expected to Register',
     
     // Actions
     'update_follow_up' => 'Update Follow-up',
@@ -210,4 +212,39 @@ return [
         'referral_discussion' => 'Referral Discussion',
         'renewal_discussion' => 'Renewal Discussion',
     ],
+    
+    // Validation messages
+    'follow_up_created' => 'Follow-up created successfully',
+    'follow_up_updated' => 'Follow-up updated successfully',
+    'follow_up_added' => 'Follow-up added successfully',
+    'student_required' => 'Student is required.',
+    'student_invalid' => 'Please select a valid student.',
+    'scheduled_date_required' => 'Scheduled date is required.',
+    'scheduled_date_invalid' => 'Please enter a valid scheduled date.',
+    'contact_method_required' => 'Contact method is required.',
+    'contact_method_invalid' => 'Please select a valid contact method.',
+    'type_required' => 'Follow-up type is required.',
+    'type_invalid' => 'Please select a valid follow-up type.',
+    'purpose_required' => 'Purpose is required.',
+    'purpose_max' => 'Purpose may not be greater than 1000 characters.',
+    'notes_max' => 'Notes may not be greater than 1000 characters.',
+    'priority_required' => 'Priority is required.',
+    'priority_invalid' => 'Please select a valid priority.',
+    'course_invalid' => 'Please select a valid course.',
+    'action_note_max' => 'Action note may not be greater than 1000 characters.',
+    'outcome_invalid' => 'Please select a valid outcome.',
+    'status_invalid' => 'Please select a valid status.',
+    'next_follow_up_date_invalid' => 'Please enter a valid next follow-up date.',
+    'next_follow_up_date_future' => 'Next follow-up date must be today or later.',
+    'cancellation_reason_invalid' => 'Please select a valid cancellation reason.',
+    'cancellation_details_max' => 'Cancellation details may not be greater than 500 characters.',
+    
+    // Field names
+    'student' => 'Student',
+    'course' => 'Course',
+    'action_note' => 'Action Note',
+    'status' => 'Status',
+    'next_follow_up_date' => 'Next Follow-up Date',
+    'cancellation_reason' => 'Cancellation Reason',
+    'cancellation_details' => 'Cancellation Details',
 ];

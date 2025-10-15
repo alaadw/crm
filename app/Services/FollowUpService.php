@@ -85,13 +85,18 @@ class FollowUpService
 
         $todayCount = (clone $query)->dueToday()->count();
         $overdueCount = (clone $query)->overdue()->count();
-
-        $statusCounts = (clone $query)
+        //clone means create a copy of the query to avoid modifying the original query
+        // Build normalized status counts so UI doesn't depend on exact casing/phrasing
+        $statuses = (clone $query)
             ->inDateRange($startDate, $endDate)
-            ->selectRaw('status, COUNT(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status')
-            ->toArray();
+            ->pluck('status');
+
+        $statusCounts = [];
+        foreach ($statuses as $status) {
+            $key = $this->normalizeStatusKey($status);
+            if ($key === '') { continue; }
+            $statusCounts[$key] = ($statusCounts[$key] ?? 0) + 1;
+        }
 
         return [
             'today' => $todayCount,
@@ -99,6 +104,24 @@ class FollowUpService
             'by_status' => $statusCounts,
             'total_active' => $todayCount + $overdueCount,
         ];
+    }
+
+    /**
+     * Normalize various status values (legacy and current) to canonical keys
+     */
+    private function normalizeStatusKey(?string $status): string
+    {
+        $s = trim(strtolower((string) $status));
+        return match($s) {
+            'postponed' => 'postponed',
+            'expected', 'expected to register' => 'expected',
+            'registered' => 'registered',
+            'cancelled' => 'cancelled',
+            'completed' => 'completed',
+            'pending' => 'pending',
+            'no follow-ups', 'no_follow_ups' => 'no_follow_ups',
+            default => $s,
+        };
     }
 
     /**

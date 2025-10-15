@@ -149,17 +149,15 @@
                                         <small class="text-muted">{{ $followUp->user->name ?? __('common.system') }}</small>
                                     </td>
                                     <td>
-                                        <div class="btn-group" role="group">
+                                        <div class="btn-group btn-group-sm" role="group">
                                             <a href="{{ route('follow-ups.show', $followUp) }}" 
-                                               class="btn btn-sm btn-outline-primary" title="{{ __('common.view') }}">
+                                               class="btn btn-outline-primary" title="{{ __('common.view') }}">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            @if($followUp->status === 'pending')
-                                                <a href="{{ route('follow-ups.edit', $followUp) }}" 
-                                                   class="btn btn-sm btn-outline-warning" title="{{ __('common.edit') }}">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                            @endif
+                                            <a href="{{ route('follow-ups.edit', $followUp) }}" 
+                                               class="btn btn-outline-warning" title="{{ __('common.edit') }}">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
                                         </div>
                                     </td>
                                 </tr>

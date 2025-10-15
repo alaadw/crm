@@ -1,20 +1,14 @@
 @extends('layouts.app')
 
-@section('title', 'Edit Follow-up - CRM Academy')
+@section('title', __('follow_ups.edit_follow_up') . ' - CRM Academy')
 
 @section('content')
 <div class="row">
     <div class="col-md-8 mx-auto">
-                                <select class="form-select @error('priority') is-invalid @enderror" 
-                                    id="priority" name="priority" required>
-                                <option value="">{{ __('follow_ups.select_priority') }}</option>
-                                <option value="high" {{ old('priority', $followUp->priority) === 'high' ? 'selected' : '' }}>{{ __('follow_ups.high') }}</option>
-                                <option value="medium" {{ old('priority', $followUp->priority) === 'medium' ? 'selected' : '' }}>{{ __('follow_ups.medium') }}</option>
-                                <option value="low" {{ old('priority', $followUp->priority) === 'low' ? 'selected' : '' }}>{{ __('follow_ups.low') }}</option>-- Page Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="h3">
                 <i class="fas fa-edit me-2"></i>
-                {{ __('follow-ups.edit_follow_up') }}
+                {{ __('follow_ups.edit_follow_up') }}
             </h1>
             <div>
                 <a href="{{ route('follow-ups.student', $followUp->student) }}" class="btn btn-outline-secondary me-2">
@@ -62,7 +56,7 @@
             <div class="card-header">
                 <h5 class="card-title mb-0">
                     <i class="fas fa-edit me-2"></i>
-                    {{ __('follow-ups.update_follow_up_details') }}
+                    {{ __('follow_ups.update_follow_up_details') }}
                 </h5>
             </div>
             <div class="card-body">
@@ -73,7 +67,7 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="scheduled_date" class="form-label">
-                                {{ __('follow-ups.scheduled_date') }} <span class="text-danger">*</span>
+                                {{ __('follow_ups.scheduled_date') }} <span class="text-danger">*</span>
                             </label>
                             <input type="datetime-local" 
                                    class="form-control @error('scheduled_date') is-invalid @enderror" 
@@ -87,7 +81,7 @@
                         </div>
                         <div class="col-md-6">
                             <label for="priority" class="form-label">
-                                {{ __('follow-ups.priority') }} <span class="text-danger">*</span>
+                                {{ __('follow_ups.priority') }} <span class="text-danger">*</span>
                             </label>
                             <select class="form-select @error('priority') is-invalid @enderror" 
                                     id="priority" name="priority" required>
@@ -107,15 +101,15 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="contact_method" class="form-label">
-                                {{ __('follow-ups.contact_method') }} <span class="text-danger">*</span>
+                                {{ __('follow_ups.contact_method') }} <span class="text-danger">*</span>
                             </label>
                             <select class="form-select @error('contact_method') is-invalid @enderror" 
                                     id="contact_method" name="contact_method" required>
-                                <option value="">{{ __('follow-ups.select_method') }}</option>
-                                <option value="phone" {{ old('contact_method', $followUp->contact_method) === 'phone' ? 'selected' : '' }}>{{ __('follow-ups.phone_call') }}</option>
-                                <option value="whatsapp" {{ old('contact_method', $followUp->contact_method) === 'whatsapp' ? 'selected' : '' }}>{{ __('follow-ups.whatsapp') }}</option>
-                                <option value="email" {{ old('contact_method', $followUp->contact_method) === 'email' ? 'selected' : '' }}>{{ __('follow-ups.email') }}</option>
-                                <option value="in_person" {{ old('contact_method', $followUp->contact_method) === 'in_person' ? 'selected' : '' }}>{{ __('follow-ups.in_person') }}</option>
+                                <option value="">{{ __('follow_ups.select_method') }}</option>
+                                <option value="phone" {{ old('contact_method', $followUp->contact_method) === 'phone' ? 'selected' : '' }}>{{ __('follow_ups.phone_call') }}</option>
+                                <option value="whatsapp" {{ old('contact_method', $followUp->contact_method) === 'whatsapp' ? 'selected' : '' }}>{{ __('follow_ups.whatsapp') }}</option>
+                                <option value="email" {{ old('contact_method', $followUp->contact_method) === 'email' ? 'selected' : '' }}>{{ __('follow_ups.email') }}</option>
+                                <option value="in_person" {{ old('contact_method', $followUp->contact_method) === 'in_person' ? 'selected' : '' }}>{{ __('follow_ups.in_person') }}</option>
                             </select>
                             @error('contact_method')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -123,17 +117,17 @@
                         </div>
                         <div class="col-md-6">
                             <label for="type" class="form-label">
-                                {{ __('follow-ups.type') }} <span class="text-danger">*</span>
+                                {{ __('follow_ups.type') }} <span class="text-danger">*</span>
                             </label>
                             <select class="form-select @error('type') is-invalid @enderror" 
                                     id="type" name="type" required>
-                                <option value="">{{ __('follow-ups.select_type') }}</option>
-                                <option value="initial_contact" {{ old('type', $followUp->type) === 'initial_contact' ? 'selected' : '' }}>{{ __('follow-ups.initial_contact') }}</option>
-                                <option value="course_inquiry" {{ old('type', $followUp->type) === 'course_inquiry' ? 'selected' : '' }}>{{ __('follow-ups.course_inquiry') }}</option>
-                                <option value="payment_reminder" {{ old('type', $followUp->type) === 'payment_reminder' ? 'selected' : '' }}>{{ __('follow-ups.payment_reminder') }}</option>
-                                <option value="enrollment_follow_up" {{ old('type', $followUp->type) === 'enrollment_follow_up' ? 'selected' : '' }}>{{ __('follow-ups.enrollment_follow_up') }}</option>
-                                <option value="customer_service" {{ old('type', $followUp->type) === 'customer_service' ? 'selected' : '' }}>{{ __('follow-ups.customer_service') }}</option>
-                                <option value="other" {{ old('type', $followUp->type) === 'other' ? 'selected' : '' }}>{{ __('follow-ups.other') }}</option>
+                                <option value="">{{ __('follow_ups.select_type') }}</option>
+                                <option value="initial_contact" {{ old('type', $followUp->type) === 'initial_contact' ? 'selected' : '' }}>{{ __('follow_ups.initial_contact') }}</option>
+                                <option value="course_inquiry" {{ old('type', $followUp->type) === 'course_inquiry' ? 'selected' : '' }}>{{ __('follow_ups.course_inquiry') }}</option>
+                                <option value="payment_reminder" {{ old('type', $followUp->type) === 'payment_reminder' ? 'selected' : '' }}>{{ __('follow_ups.payment_reminder') }}</option>
+                                <option value="enrollment_follow_up" {{ old('type', $followUp->type) === 'enrollment_follow_up' ? 'selected' : '' }}>{{ __('follow_ups.enrollment_follow_up') }}</option>
+                                <option value="customer_service" {{ old('type', $followUp->type) === 'customer_service' ? 'selected' : '' }}>{{ __('follow_ups.customer_service') }}</option>
+                                <option value="other" {{ old('type', $followUp->type) === 'other' ? 'selected' : '' }}>{{ __('follow_ups.other') }}</option>
                             </select>
                             @error('type')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -143,17 +137,24 @@
 
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="course_id" class="form-label">
-                                {{ __('follow-ups.related_course') }}
+                            <label for="department" class="form-label">
+                                {{ __('common.department') }}
                             </label>
-                            <select class="form-select @error('course_id') is-invalid @enderror" 
-                                    id="course_id" name="course_id">
-                                <option value="">{{ __('follow-ups.select_course') }}</option>
-                                @foreach($courses as $course)
-                                    <option value="{{ $course->id }}" {{ old('course_id', $followUp->course_id) == $course->id ? 'selected' : '' }}>
-                                        {{ $course->name_ar }} - {{ $course->name_en }}
+                            <select class="form-select" id="department" name="department">
+                                <option value="">{{ __('common.select_department') }}</option>
+                                @foreach($departments as $dept)
+                                    <option value="{{ $dept->id }}" {{ (old('department', $selectedDepartmentId) == $dept->id) ? 'selected' : '' }}>
+                                        {{ $dept->name }}
                                     </option>
                                 @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="course_id" class="form-label">
+                                {{ __('follow_ups.related_course') }}
+                            </label>
+                            <select class="form-select @error('course_id') is-invalid @enderror" id="course_id" name="course_id">
+                                <option value="">{{ __('follow_ups.select_course') }}</option>
                             </select>
                             @error('course_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -164,13 +165,17 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="status" class="form-label">
-                                {{ __('follow-ups.status') }} <span class="text-danger">*</span>
+                                {{ __('follow_ups.status') }} <span class="text-danger">*</span>
                             </label>
                             <select class="form-select @error('status') is-invalid @enderror" 
                                     id="status" name="status" required>
                                 @foreach($statuses as $value => $label)
-                                    <option value="{{ $value }}" {{ old('status', $followUp->status) === $value ? 'selected' : '' }}>
-                                        {{ $label }}
+                                    @php
+                                        $statusKey = $value === 'expected' ? 'expected_to_register' : $value;
+                                        $statusLabel = __("follow_ups.$statusKey");
+                                    @endphp
+                                    <option value="{{ $value }}" {{ old('status', $followUp->status_key) === $value ? 'selected' : '' }}>
+                                        {{ $statusLabel }}
                                     </option>
                                 @endforeach
                             </select>
@@ -183,9 +188,22 @@
                             <select class="form-select @error('outcome') is-invalid @enderror" 
                                     id="outcome" name="outcome">
                                 <option value="">{{ __('follow_ups.select_outcome') }}</option>
+                                @php
+                                    $outcomeMap = [
+                                        'Interested' => 'student_interested',
+                                        'No Answer' => 'no_answer',
+                                        'Wrong Number' => 'wrong_number',
+                                        'Not Interested' => 'student_not_interested',
+                                        'Callback Requested' => 'busy_callback',
+                                    ];
+                                @endphp
                                 @foreach($outcomes as $outcome)
+                                    @php
+                                        $key = $outcomeMap[$outcome] ?? null;
+                                        $label = $key ? __("follow_ups.$key") : $outcome;
+                                    @endphp
                                     <option value="{{ $outcome }}" {{ old('outcome', $followUp->outcome) === $outcome ? 'selected' : '' }}>
-                                        {{ $outcome }}
+                                        {{ $label }}
                                     </option>
                                 @endforeach
                             </select>
@@ -285,6 +303,43 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
+    // CSRF token for session-authenticated API calls
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    function loadCoursesByDepartment(deptId, selectedCourseId = null) {
+        const courseSelect = $('#course_id');
+    courseSelect.html('<option value="">{{ __('follow_ups.select_course') }}</option>');
+        if (!deptId) return;
+
+        fetch(`/api/courses-by-category?category_id=${deptId}`, {
+            headers: { 'X-CSRF-TOKEN': csrfToken }
+        })
+        .then(res => res.json())
+        .then(list => {
+            list.forEach(c => {
+                const opt = $('<option></option>')
+                    .attr('value', c.id)
+                    .text(c.name);
+                if (selectedCourseId && String(selectedCourseId) === String(c.id)) {
+                    opt.attr('selected', 'selected');
+                }
+                courseSelect.append(opt);
+            });
+        })
+        .catch(() => {});
+    }
+
+    // When department changes, load its courses
+    $('#department').on('change', function() {
+        loadCoursesByDepartment($(this).val());
+    });
+
+    // On initial load, preselect department and load its courses
+    const initialDept = $('#department').val();
+    const selectedCourseId = '{{ old('course_id', $followUp->course_id) }}';
+    if (initialDept) {
+        loadCoursesByDepartment(initialDept, selectedCourseId);
+    }
     // Show/hide cancellation fields based on status
     function toggleCancellationFields() {
         const status = $('#status').val();

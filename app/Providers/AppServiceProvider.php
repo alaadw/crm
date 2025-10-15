@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Pagination\Paginator;
 use App\Services\StudentService;
 use App\Services\PhoneService;
 use App\Services\CategoryService;
@@ -44,6 +45,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Use Bootstrap 5 pagination views instead of Tailwind
+        Paginator::useBootstrapFive();
     }
 }

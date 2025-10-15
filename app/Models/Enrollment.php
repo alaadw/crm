@@ -11,6 +11,11 @@ class Enrollment extends Model
 {
     use HasFactory;
 
+    /**
+     * Small tolerance for floating point/rounding differences (in JOD)
+     */
+    public const EPSILON = 0.01;
+
     protected $fillable = [
         'student_id',
         'course_class_id',
@@ -78,6 +83,53 @@ class Enrollment extends Model
             'completed' => 'success',
             default => 'secondary'
         };
+    }
+
+    /**
+     * Recalculate paid_amount, due_amount, and payment_status from payments (JOD-based)
+     *
+     * - Sums payments.amount_in_jod
+     * - Applies rounding and epsilon tolerance to avoid false "partial" due to tiny differences
+     *
+     * @param bool $save Persist recalculated values when true
+     * @return $this
+     */
+    public function recalcFromPayments(bool $save = true): self
+    {
+        // Sum all payments in JOD
+        $paidJod = (float) $this->payments()->sum('amount_in_jod');
+        $paidRounded = round($paidJod, 2);
+        $totalRounded = round((float) $this->total_amount, 2);
+
+        // Compute due using rounding and clamp to zero
+        $due = max(0.0, round($totalRounded - $paidRounded, 2));
+
+        // Determine status with epsilon tolerance
+        if ($paidRounded <= self::EPSILON) {
+            $status = 'not_paid';
+        } elseif (abs($totalRounded - $paidRounded) <= self::EPSILON || $paidRounded > $totalRounded) {
+            // Consider as completed when within epsilon or overpaid
+            $status = 'completed';
+        } else {
+            $status = 'partial';
+        }
+
+        // Optionally persist
+        if ($save) {
+            $this->paid_amount = $paidRounded;
+            $this->due_amount = $due; // persisted for reporting; accessor also guards to zero
+            $this->payment_status = $status;
+            $this->save();
+        } else {
+            // Keep values in-memory for immediate use
+            $this->setRawAttributes(array_merge($this->getAttributes(), [
+                'paid_amount' => $paidRounded,
+                'due_amount' => $due,
+                'payment_status' => $status,
+            ]));
+        }
+
+        return $this;
     }
 
     // Scopes

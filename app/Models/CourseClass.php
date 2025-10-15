@@ -57,7 +57,7 @@ class CourseClass extends Model
     // Accessors & Mutators
     public function getClassFeeAttribute(): ?float
     {
-        return $this->default_price;
+        return $this->attributes['default_price'] ?? null;
     }
 
     public function setClassFeeAttribute($value): void

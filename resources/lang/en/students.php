@@ -40,6 +40,9 @@ return [
     'optional_alternative_number' => 'Optional alternative number',
     'changing_phone_notice' => 'Changing this will move the old number to alternative phone',
     'preferred_course' => 'Preferred Course',
+    'university' => 'University',
+    'major' => 'Major',
+    'college' => 'College',
     'select_course_optional' => 'Select Course (Optional)',
     'leave_empty_if_undecided' => 'Leave empty if student hasn\'t decided yet',
     'how_did_they_reach_us' => 'How did they reach us?',
@@ -74,11 +77,14 @@ return [
 
     // Lead sources
     'social_media' => 'Social Media',
+    'university_circular' => 'University Circular',
+    'purchased_data' => 'Purchased Data',
     'google_ads' => 'Google Ads',
     'referral' => 'Referral',
     'walk_in' => 'Walk-in',
     'website' => 'Website',
     'phone_inquiry' => 'Phone Inquiry',
+    'old_student' => 'Old Student',
     'other' => 'Other',
 
     // Enrollment status
@@ -95,6 +101,10 @@ return [
     'total_students' => 'Total Students',
     'filter_by_department' => 'Filter by Department',
     'all_departments' => 'All Departments',
+    'filter_by_course' => 'Filter by Course',
+    'all_courses' => 'All Courses',
+    'no_courses_available' => 'No courses available',
+    'not_available_legacy' => 'Not available for legacy departments',
     'filter' => 'Filter',
     'clear' => 'Clear',
     'students_list' => 'Students List',
@@ -120,8 +130,8 @@ return [
     
     // Search functionality
     'search' => 'Search',
-    'search_placeholder' => 'Search by name, email, or phone...',
-    'search_hint' => 'Search by Arabic name, English name, email, or phone number',
+    'search_placeholder' => 'Search by ID, name, email, or phone...',
+    'search_hint' => 'Search by Student ID, Arabic name, English name, email, or phone number',
     'search_filter' => 'Search & Filter',
     'search_results_for' => 'Search results for',
     'filter_by_department' => 'Filter by Department',
@@ -186,5 +196,8 @@ return [
     'department_required' => 'Please select a department.',
     'department_invalid' => 'Please select a valid department.',
     'preferred_course_invalid' => 'Please select a valid course.',
+    'university_max' => 'University may not be greater than 255 characters.',
+    'major_max' => 'Major may not be greater than 255 characters.',
+    'college_max' => 'College may not be greater than 255 characters.',
     'notes_max' => 'Notes may not be greater than 1000 characters.',
 ];

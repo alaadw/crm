@@ -83,4 +83,31 @@ return [
     'cannot_undo' => 'This action cannot be undone',
     'confirm_delete_class' => 'Are you sure you want to delete this class?',
     'edit_class_information' => 'Edit Class Information',
+    
+    // Validation messages
+    'class_name_required' => 'Class name is required.',
+    'class_name_max' => 'Class name may not be greater than 255 characters.',
+    'class_code_required' => 'Class code is required.',
+    'class_code_max' => 'Class code may not be greater than 50 characters.',
+    'class_code_unique' => 'This class code is already taken.',
+    'course_required' => 'Please select a course.',
+    'course_invalid' => 'Please select a valid course.',
+    'category_required' => 'Please select a category.',
+    'category_invalid' => 'Please select a valid category.',
+    'start_date_required' => 'Start date is required.',
+    'start_date_invalid' => 'Please enter a valid start date.',
+    'end_date_required' => 'End date is required.',
+    'end_date_invalid' => 'Please enter a valid end date.',
+    'end_date_after_start' => 'End date must be after start date.',
+    'status_required' => 'Please select a status.',
+    'status_invalid' => 'Please select a valid status.',
+    'class_fee_numeric' => 'Class fee must be a number.',
+    'class_fee_min' => 'Class fee must be at least 0.',
+    'max_students_integer' => 'Max students must be a whole number.',
+    'max_students_min' => 'Max students must be at least 1.',
+    'instructor_name_max' => 'Instructor name may not be greater than 255 characters.',
+    
+    // Cascading dropdowns
+    'first_select_department' => 'First select a department',
+    'no_courses_in_department' => 'No courses available in this department',
 ];

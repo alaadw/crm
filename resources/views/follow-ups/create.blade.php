@@ -126,17 +126,24 @@
 
                     <div class="row mb-3">
                         <div class="col-md-6">
+                            <label for="department" class="form-label">
+                                {{ __('common.department') }}
+                            </label>
+                            <select class="form-select" id="department" name="department">
+                                <option value="">{{ __('common.select_department') }}</option>
+                                @foreach($departments as $dept)
+                                    <option value="{{ $dept->id }}" {{ old('department') == $dept->id ? 'selected' : '' }}>
+                                        {{ $dept->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
                             <label for="course_id" class="form-label">
                                 {{ __('follow_ups.related_course') }}
                             </label>
-                            <select class="form-select @error('course_id') is-invalid @enderror" 
-                                    id="course_id" name="course_id">
+                            <select class="form-select @error('course_id') is-invalid @enderror" id="course_id" name="course_id">
                                 <option value="">{{ __('follow_ups.select_course') }}</option>
-                                @foreach($courses as $course)
-                                    <option value="{{ $course->id }}" {{ old('course_id') == $course->id ? 'selected' : '' }}>
-                                        {{ $course->name_ar }} - {{ $course->name_en }}
-                                    </option>
-                                @endforeach
                             </select>
                             @error('course_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -187,3 +194,46 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function() {
+    // CSRF token for session-authenticated API calls
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    function loadCoursesByDepartment(deptId, selectedCourseId = null) {
+        const courseSelect = $('#course_id');
+        courseSelect.html('<option value="">{{ __('follow_ups.select_course') }}</option>');
+        if (!deptId) return;
+
+        fetch(`/api/courses-by-category?category_id=${deptId}`, {
+            headers: { 'X-CSRF-TOKEN': csrfToken }
+        })
+        .then(res => res.json())
+        .then(list => {
+            list.forEach(c => {
+                const opt = $('<option></option>')
+                    .attr('value', c.id)
+                    .text(c.name);
+                if (selectedCourseId && String(selectedCourseId) === String(c.id)) {
+                    opt.attr('selected', 'selected');
+                }
+                courseSelect.append(opt);
+            });
+        })
+        .catch(() => {});
+    }
+
+    // When department changes, load its courses
+    $('#department').on('change', function() {
+        loadCoursesByDepartment($(this).val());
+    });
+
+    // On initial load, if a department was selected (validation back), load courses and select old course
+    const initialDept = $('#department').val();
+    if (initialDept) {
+        loadCoursesByDepartment(initialDept, '{{ old('course_id') }}');
+    }
+});
+</script>
+@endpush

@@ -70,7 +70,7 @@
                 
                 @auth
                     <!-- Student Search -->
-                    <form class="d-flex me-3" action="{{ route('students.search') }}" method="GET">
+                    <form class="d-flex me-3" action="/students" method="GET">
                         <input class="form-control me-2" type="search" name="search" 
                                placeholder="{{ __('Search by phone or ID...') }}" aria-label="{{ __('common.search') }}"
                                value="{{ request('search') }}">

@@ -129,25 +129,65 @@ class FollowUp extends Model
 
     public function getStatusLabelAttribute(): string
     {
-        return match($this->status) {
-            'No Follow-ups' => 'No Follow-ups',
-            'Postponed' => 'Postponed',
-            'Expected to Register' => 'Expected to Register',
-            'Registered' => 'Registered',
-            'Cancelled' => 'Cancelled',
-            default => $this->status
-        };
+        $map = [
+            'pending' => 'Pending',
+            'completed' => 'Completed',
+            'cancelled' => 'Cancelled',
+            'postponed' => 'Postponed',
+            'expected' => 'Expected to Register',
+            'registered' => 'Registered',
+            'no_follow_ups' => 'No Follow-ups',
+        ];
+        $key = $this->normalizeStatus($this->status);
+        return $map[$key] ?? ($this->status ?: '');
     }
 
     public function getStatusColorAttribute(): string
     {
-        return match($this->status) {
-            'No Follow-ups' => 'secondary',
-            'Postponed' => 'warning',
-            'Expected to Register' => 'success',
-            'Registered' => 'primary',
-            'Cancelled' => 'danger',
-            default => 'secondary'
+        $key = $this->normalizeStatus($this->status);
+        $colors = [
+            'pending' => 'secondary',
+            'completed' => 'success',
+            'cancelled' => 'danger',
+            'postponed' => 'warning',
+            'expected' => 'success',
+            'registered' => 'primary',
+            'no_follow_ups' => 'secondary',
+        ];
+        return $colors[$key] ?? 'secondary';
+    }
+
+    /**
+     * Canonical normalized key for status (for form bindings)
+     */
+    public function getStatusKeyAttribute(): string
+    {
+        return $this->normalizeStatus($this->attributes['status'] ?? '');
+    }
+
+    /**
+     * Mutator to normalize status values on write
+     */
+    public function setStatusAttribute($value): void
+    {
+        $this->attributes['status'] = $this->normalizeStatus((string) $value);
+    }
+
+    /**
+     * Normalize status to canonical lowercase keys
+     */
+    protected function normalizeStatus(?string $status): string
+    {
+        $s = trim(strtolower((string) $status));
+        return match($s) {
+            'postponed' => 'postponed',
+            'expected', 'expected to register' => 'expected',
+            'registered' => 'registered',
+            'cancelled' => 'cancelled',
+            'completed' => 'completed',
+            'pending' => 'pending',
+            'no follow-ups', 'no_follow_ups' => 'no_follow_ups',
+            default => $s,
         };
     }
 
@@ -156,9 +196,11 @@ class FollowUp extends Model
     {
         return [
             'pending' => 'Pending',
+            'postponed' => 'Postponed',
+            'expected' => 'Expected to Register',
+            'registered' => 'Registered',
             'completed' => 'Completed',
             'cancelled' => 'Cancelled',
-            'postponed' => 'Postponed'
         ];
     }
 

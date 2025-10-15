@@ -82,4 +82,31 @@ return [
     'cannot_undo' => 'هذا الإجراء لا يمكن التراجع عنه',
     'confirm_delete_class' => 'هل أنت متأكد من حذف هذه الشعبة؟',
     'edit_class_information' => 'تعديل معلومات الشعبة',
+    
+    // Validation messages
+    'class_name_required' => 'اسم الشعبة مطلوب.',
+    'class_name_max' => 'يجب أن لا يزيد اسم الشعبة عن 255 حرف.',
+    'class_code_required' => 'رمز الشعبة مطلوب.',
+    'class_code_max' => 'يجب أن لا يزيد رمز الشعبة عن 50 حرف.',
+    'class_code_unique' => 'رمز الشعبة هذا مستخدم بالفعل.',
+    'course_required' => 'يرجى اختيار الدورة.',
+    'course_invalid' => 'يرجى اختيار دورة صالحة.',
+    'category_required' => 'يرجى اختيار القسم.',
+    'category_invalid' => 'يرجى اختيار قسم صالح.',
+    'start_date_required' => 'تاريخ البداية مطلوب.',
+    'start_date_invalid' => 'يرجى إدخال تاريخ بداية صالح.',
+    'end_date_required' => 'تاريخ النهاية مطلوب.',
+    'end_date_invalid' => 'يرجى إدخال تاريخ نهاية صالح.',
+    'end_date_after_start' => 'تاريخ النهاية يجب أن يكون بعد تاريخ البداية.',
+    'status_required' => 'يرجى اختيار الحالة.',
+    'status_invalid' => 'يرجى اختيار حالة صالحة.',
+    'class_fee_numeric' => 'رسوم الشعبة يجب أن تكون رقم.',
+    'class_fee_min' => 'رسوم الشعبة يجب أن تكون على الأقل 0.',
+    'max_students_integer' => 'الحد الأقصى للطلاب يجب أن يكون رقم صحيح.',
+    'max_students_min' => 'الحد الأقصى للطلاب يجب أن يكون على الأقل 1.',
+    'instructor_name_max' => 'يجب أن لا يزيد اسم المدرس عن 255 حرف.',
+    
+    // Cascading dropdowns
+    'first_select_department' => 'اختر القسم أولاً',
+    'no_courses_in_department' => 'لا توجد دورات متاحة في هذا القسم',
 ];

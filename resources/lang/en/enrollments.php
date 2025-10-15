@@ -23,6 +23,7 @@ return [
     'paid_amount' => 'Paid Amount',
     'due_amount' => 'Due Amount',
     'amount_paid_at_enrollment' => 'Amount paid at the time of enrollment',
+    'amount_in_selected_currency' => 'Amount in the selected currency',
     'payment_status' => 'Payment Status',
     'payment_method' => 'Payment Method',
     'due' => 'Due',

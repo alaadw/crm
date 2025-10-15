@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', '{{ __("students.students") }} - CRM Academy')
+@section('title', __("students.students") . ' - CRM Academy')
 
 @section('content')
 <div class="row">
@@ -55,13 +55,13 @@
         <!-- Filters -->
         <div class="card mb-4">
             <div class="card-body">
-                <form method="GET" action="{{ route('students.index') }}" class="row g-3">
+                <form method="GET" action="{{ route('students.index') }}" id="filterForm" class="row g-3">
                     <div class="col-md-3">
                         <label for="search" class="form-label">{{ __('students.search') }}</label>
                         <input type="text" name="search" id="search" class="form-control" 
                                value="{{ request('search') }}" 
-                               placeholder="{{ __('students.search_placeholder') }}">
-                        <div class="form-text">{{ __('students.search_hint') }}</div>
+                               placeholder="{{ __('students.search_placeholder') }}" title="{{ __('students.search_tooltip') }}">
+                         
                     </div>
                     <div class="col-md-3">
                         <label for="department" class="form-label">{{ __('students.filter_by_department') }}</label>
@@ -74,18 +74,64 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-6 d-flex align-items-end">
+                    <div class="col-md-3">
+                        <label for="course" class="form-label">{{ __('students.filter_by_course') }}</label>
+                        <select name="course" id="course" class="form-select">
+                            <option value="">{{ __('students.all_courses') }}</option>
+                            @if(isset($courses) && count($courses) > 0)
+                                @foreach($courses as $courseItem)
+                                    <option value="{{ $courseItem['id'] }}" {{ request('course') == $courseItem['id'] ? 'selected' : '' }}>
+                                        {{ $courseItem['name'] }}
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
                         <button type="submit" class="btn btn-outline-primary me-2">
                             <i class="fas fa-search me-1"></i>
                             {{ __('students.search_filter') }}
                         </button>
-                        @if(request('search') || request('department'))
+                        @if(request('search') || request('department') || request('course'))
                             <a href="{{ route('students.index') }}" class="btn btn-outline-secondary">
                                 <i class="fas fa-times me-1"></i>
                                 {{ __('students.clear') }}
                             </a>
                         @endif
                     </div>
+                </form>
+                <hr>
+                <form method="POST" action="{{ route('students.import') }}" enctype="multipart/form-data" class="row g-3 mt-1">
+                    @csrf
+                    <div class="col-md-6">
+                        <label for="file" class="form-label" title="{{ __('students.full_name') }} (AR), {{ __('students.primary_phone') }} (JO), {{ __('students.college') }}, {{ __('students.major') }}">{{ __('common.import') }} <small class="text-black-50"> {{ __('students.full_name') }} (AR), {{ __('students.primary_phone') }} (JO), {{ __('students.college') }}, {{ __('students.major') }}</small></label>
+                        <input type="file" class="form-control @error('file') is-invalid @enderror" id="file" name="file" accept=".xlsx,.csv,.txt">
+                        @error('file')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <div class="form-text"></div>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-outline-success">
+                            <i class="fas fa-file-import me-1"></i> {{ __('common.import') }}
+                        </button>
+                    </div>
+                    @if(session('import_result'))
+                    @php $r = session('import_result'); @endphp
+                    <div class="col-12">
+                        <div class="alert alert-info mt-2">
+                            <strong>{{ __('common.import_completed') }}</strong>
+                            — {{ __('common.total') }}: {{ $r['rows'] }}, {{ __('common.created') }}: {{ $r['created'] }}, {{ __('common.warning') }} ({{ __('students.not_specified') }}): {{ $r['invalid'] }}, {{ __('common.duplicate') ?? 'Duplicate' }}: {{ $r['duplicates'] }}
+                            @if(!empty($r['errors']))
+                                <ul class="mb-0 mt-2">
+                                    @foreach($r['errors'] as $e)
+                                        <li>{{ $e }}</li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                        </div>
+                    </div>
+                    @endif
                 </form>
             </div>
         </div>
@@ -96,8 +142,19 @@
                 <h5 class="card-title mb-0">
                     <i class="fas fa-list me-2"></i>
                     {{ __('students.students_list') }}
+                    @if(session('status'))
+                        <span class="badge bg-success ms-2">{{ session('status') }}</span>
+                    @endif
                     @if(request('department'))
                         <span class="badge bg-primary ms-2">{{ $departments[request('department')] ?? request('department') }}</span>
+                    @endif
+                    @if(request('course') && isset($courses))
+                        @php
+                            $selectedCourse = collect($courses)->firstWhere('id', request('course'));
+                        @endphp
+                        @if($selectedCourse)
+                            <span class="badge bg-success ms-2">{{ $selectedCourse['name'] }}</span>
+                        @endif
                     @endif
                     @if(request('search'))
                         <span class="badge bg-info ms-2">
@@ -107,6 +164,13 @@
                 </h5>
             </div>
             <div class="card-body">
+                @if(session('import_result'))
+                    @php $r = session('import_result'); @endphp
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-1"></i>
+                        {{ __('common.import_completed') }} — {{ __('common.total') }}: {{ $r['rows'] }}, {{ __('common.created') }}: {{ $r['created'] }}, {{ __('common.warning') }}: {{ $r['invalid'] }}, {{ __('common.duplicate') ?? 'Duplicate' }}: {{ $r['duplicates'] }}
+                    </div>
+                @endif
                 @if($students->count() > 0)
                     <div class="table-responsive">
                         <table class="table table-striped table-hover">
@@ -129,10 +193,13 @@
                                         <code>{{ $student->student_id }}</code>
                                     </td>
                                     <td>
-                                        <strong>{{ $student->full_name }}</strong>
                                         @if($student->full_name_en)
-                                            <br><small class="text-muted">{{ $student->full_name_en }}</small>
-                                        @endif
+                                        
+                                        
+                                            <a href="{{ route('students.show', $student) }}" 
+                                               class="text-dark text-decoration-none" title="{{ __('students.show') }}">
+                                               <strong>{{ $student->full_name ?? $student->full_name_en }}</strong>
+                                       @endif        
                                     </td>
                                     <td>
                                         <i class="fas fa-phone me-1"></i>
@@ -177,7 +244,7 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <small class="text-muted">{{ $student->reach_source }}</small>
+                                        <small class="text-muted">{{ $student->reach_source_label }}</small>
                                     </td>
                                     <td>
                                         <div class="btn-group" role="group">
@@ -249,6 +316,70 @@ $(document).ready(function() {
     // Add visual feedback for search results
     @if(request('search'))
         $('#search').addClass('border-info');
+    @endif
+    
+    // Dynamic course loading based on department selection
+    $('#department').on('change', function() {
+        const departmentId = $(this).val();
+        const courseSelect = $('#course');
+        
+        // Clear current courses
+        courseSelect.html('<option value="">{{ __("students.all_courses") }}</option>');
+        
+        // If no department selected, disable course select
+        if (!departmentId) {
+            courseSelect.prop('disabled', true);
+            return;
+        }
+        
+        // If department is not numeric (legacy), disable course select
+        if (isNaN(departmentId)) {
+            courseSelect.prop('disabled', true);
+            courseSelect.html('<option value="">{{ __("students.not_available_legacy") }}</option>');
+            return;
+        }
+        
+        // Enable course select and show loading
+        courseSelect.prop('disabled', false);
+        courseSelect.html('<option value="">{{ __("common.loading") }}...</option>');
+        
+        // Fetch courses for selected department
+        $.ajax({
+            url: '{{ route("courses.by-department") }}',
+            method: 'GET',
+            data: { department: departmentId },
+            success: function(courses) {
+                courseSelect.html('<option value="">{{ __("students.all_courses") }}</option>');
+                
+                if (courses.length > 0) {
+                    courses.forEach(function(course) {
+                        const optionText = course.name_ar || course.name_en || course.name;
+                        courseSelect.append(
+                            $('<option>', {
+                                value: course.id,
+                                text: optionText
+                            })
+                        );
+                    });
+                } else {
+                    courseSelect.append('<option value="">{{ __("students.no_courses_available") }}</option>');
+                }
+                
+                // Restore selected course if exists
+                const selectedCourse = '{{ request("course") }}';
+                if (selectedCourse) {
+                    courseSelect.val(selectedCourse);
+                }
+            },
+            error: function() {
+                courseSelect.html('<option value="">{{ __("common.error_loading") }}</option>');
+            }
+        });
+    });
+    
+    // Trigger change event on page load if department is selected
+    @if(request('department'))
+        $('#department').trigger('change');
     @endif
 });
 </script>

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\FollowUp;
 use App\Models\Student;
 use App\Services\FollowUpService;
+use App\Http\Requests\StoreFollowUpRequest;
+use App\Http\Requests\UpdateFollowUpRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -28,10 +30,14 @@ class FollowUpController extends Controller
         $overdueFollowUps = $this->followUpService->getOverdueFollowUps($user);
         $stats = $this->followUpService->getFollowUpStats($user);
 
+        // Departments for quick add modal dependent course select
+        $departments = \App\Models\Category::getDepartments();
+
         return view('follow-ups.index', compact(
             'todayFollowUps',
             'overdueFollowUps',
-            'stats'
+            'stats',
+            'departments'
         ));
     }
 
@@ -50,15 +56,13 @@ class FollowUpController extends Controller
         
         $student = Student::findOrFail($studentId);
 
-        $statuses = FollowUp::getStatuses();
-        $outcomes = FollowUp::getOutcomes();
-        $cancellationReasons = FollowUp::getCancellationReasons();
-        $priorities = FollowUp::getPriorities();
+    $statuses = FollowUp::getStatuses();
+    $outcomes = FollowUp::getOutcomes();
+    $cancellationReasons = FollowUp::getCancellationReasons();
+    $priorities = FollowUp::getPriorities();
         
-        // Get courses for selection
-        $courses = \App\Models\Course::where('is_active', true)
-                                    ->orderBy('name_ar')
-                                    ->get();
+    // Departments (top-level categories) for dependent course select
+    $departments = \App\Models\Category::getDepartments();
 
         return view('follow-ups.create', compact(
             'student',
@@ -66,35 +70,27 @@ class FollowUpController extends Controller
             'outcomes',
             'cancellationReasons',
             'priorities',
-            'courses'
+            'departments'
         ));
     }
 
     /**
      * Store new follow-up
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreFollowUpRequest $request): RedirectResponse
     {
-        $validator = $this->validateFollowUpData($request);
-
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-
         try {
             $student = Student::findOrFail($request->student_id);
             
             // Add user_id and default status to validated data
-            $data = $validator->validated();
+            $data = $request->validated();
             $data['user_id'] = Auth::id() ?? 1; // Default to user ID 1 if no auth
             $data['status'] = 'pending'; // Default status for new follow-ups
             
             $followUp = FollowUp::create($data);
 
             return redirect()->route('students.show', $student)
-                ->with('success', 'Follow-up scheduled successfully.');
+                ->with('success', __('follow_ups.follow_up_created'));
                 
         } catch (\InvalidArgumentException $e) {
             return redirect()->back()
@@ -129,10 +125,9 @@ class FollowUpController extends Controller
         $cancellationReasons = FollowUp::getCancellationReasons();
         $priorities = FollowUp::getPriorities();
         
-        // Get courses for selection
-        $courses = \App\Models\Course::where('is_active', true)
-                                    ->orderBy('name_ar')
-                                    ->get();
+        // Departments for dependent course select and selected department
+        $departments = \App\Models\Category::getDepartments();
+        $selectedDepartmentId = $followUp->course?->category_id;
 
         return view('follow-ups.edit', compact(
             'followUp',
@@ -140,25 +135,18 @@ class FollowUpController extends Controller
             'outcomes',
             'cancellationReasons',
             'priorities',
-            'courses'
+            'departments',
+            'selectedDepartmentId'
         ));
     }
 
     /**
      * Update follow-up
      */
-    public function update(Request $request, FollowUp $followUp): RedirectResponse
+    public function update(UpdateFollowUpRequest $request, FollowUp $followUp): RedirectResponse
     {
-        $validator = $this->validateFollowUpData($request, $followUp->id);
-
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-
         try {
-            $data = $validator->validated();
+            $data = $request->validated();
             
             // Remove student_id from update data if it exists (shouldn't be changed)
             unset($data['student_id']);
@@ -166,7 +154,7 @@ class FollowUpController extends Controller
             $followUp->update($data);
 
             return redirect()->route('students.show', $followUp->student)
-                ->with('success', 'Follow-up updated successfully.');
+                ->with('success', __('follow_ups.follow_up_updated'));
                 
         } catch (\InvalidArgumentException $e) {
             return redirect()->back()
@@ -174,7 +162,7 @@ class FollowUpController extends Controller
                 ->withInput();
         } catch (\Exception $e) {
             return redirect()->back()
-                ->withErrors(['error' => 'An error occurred while updating the follow-up.'])
+                ->withErrors(['error' => __('common.error_occurred')])
                 ->withInput();
         }
     }
@@ -182,21 +170,15 @@ class FollowUpController extends Controller
     /**
      * Quick add follow-up (AJAX)
      */
-    public function quickAdd(Request $request)
+    public function quickAdd(StoreFollowUpRequest $request)
     {
-        $validator = $this->validateFollowUpData($request);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
         try {
             $student = Student::findOrFail($request->student_id);
-            $followUp = $this->followUpService->createFollowUp($student, $validator->validated());
+            $followUp = $this->followUpService->createFollowUp($student, $request->validated());
 
             return response()->json([
                 'success' => true,
-                'message' => 'Follow-up added successfully',
+                'message' => __('follow_ups.follow_up_added'),
                 'follow_up' => $followUp->load(['student', 'user']),
                 'redirect' => $this->getRedirectRoute($followUp)
             ]);
@@ -204,7 +186,7 @@ class FollowUpController extends Controller
         } catch (\InvalidArgumentException $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'An error occurred while creating the follow-up'], 500);
+            return response()->json(['error' => __('common.error_occurred')], 500);
         }
     }
 
@@ -277,34 +259,6 @@ class FollowUpController extends Controller
 
     /**
      * Validate follow-up data
-     */
-    private function validateFollowUpData(Request $request, ?int $excludeId = null): \Illuminate\Validation\Validator
-    {
-        $rules = [
-            'scheduled_date' => 'required|date',
-            'contact_method' => 'required|in:phone,whatsapp,email,in_person',
-            'type' => 'required|in:initial_contact,course_inquiry,payment_reminder,enrollment_follow_up,customer_service,other',
-            'purpose' => 'required|string|max:1000',
-            'notes' => 'nullable|string|max:1000',
-            'priority' => 'required|in:high,medium,low',
-            'course_id' => 'nullable|exists:courses,id',
-            // Legacy fields for backward compatibility
-            'action_note' => 'nullable|string|max:1000',
-            'outcome' => 'nullable|in:' . implode(',', FollowUp::getOutcomes()),
-            'status' => 'nullable|in:' . implode(',', array_keys(FollowUp::getStatuses())),
-            'next_follow_up_date' => 'nullable|date|after_or_equal:today',
-            'cancellation_reason' => 'nullable|in:' . implode(',', FollowUp::getCancellationReasons()),
-            'cancellation_details' => 'nullable|string|max:500',
-        ];
-
-        // Only require student_id for new records
-        if (!$excludeId) {
-            $rules['student_id'] = 'required|exists:students,id';
-        }
-
-        return Validator::make($request->all(), $rules);
-    }
-
     /**
      * Show all follow-ups for a specific student
      */

@@ -3,7 +3,22 @@
 @section('title', __('enrollments.enroll_student') . ' - CRM Academy')
 
 @section('content')
-<div class="row justify-content-center">
+<div class="row justify-c                        <div class="col-md-6">
+                            <label for="paid_amount" class="form-label">
+                                {{ __('enrollments.paid_amount') }}
+                            </label>
+                            <input type="number" 
+                                   class="form-control @error('paid_amount') is-invalid @enderror" 
+                                   id="paid_amount" 
+                                   name="paid_amount" 
+                                   value="{{ old('paid_amount', 0) }}" 
+                                   min="0" 
+                                   step="0.01">
+                            @error('paid_amount')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">{{ __('enrollments.amount_paid_at_enrollment') }}</div>
+                        </div>
     <div class="col-md-8">
         <!-- Page Header -->
         <div class="d-flex align-items-center justify-content-between mb-4">
@@ -127,7 +142,7 @@
                         </div>
                         <div class="col-md-6">
                             <label for="total_amount" class="form-label">
-                                {{ __('enrollments.total_amount') }} ({{ __('common.currency') }}) <span class="text-danger">*</span>
+                                {{ __('enrollments.total_amount') }} <span class="text-danger">*</span>
                             </label>
                             <input type="number" 
                                    class="form-control @error('total_amount') is-invalid @enderror" 
@@ -140,6 +155,7 @@
                             @error('total_amount')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                            <div class="form-text">{{ __('enrollments.amount_in_selected_currency') }}</div>
                         </div>
                     </div>
 
@@ -160,20 +176,49 @@
                             @enderror
                             <div class="form-text">{{ __('enrollments.amount_paid_at_enrollment') }}</div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-3">
+                            <label for="currency_code" class="form-label">
+                                {{ __('currencies.currency') }}
+                            </label>
+                            <select class="form-select @error('currency_code') is-invalid @enderror" 
+                                    id="currency_code" name="currency_code">
+                                @foreach($currencies as $currency)
+                                    <option value="{{ $currency->code }}" 
+                                            data-rate="{{ $currency->exchange_rate_to_jod }}"
+                                            {{ old('currency_code', 'JOD') === $currency->code ? 'selected' : '' }}>
+                                        {{ $currency->display_name }} ({{ $currency->symbol }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('currency_code')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-3">
                             <label for="payment_method" class="form-label">
                                 {{ __('enrollments.payment_method') }}
                             </label>
                             <select class="form-select @error('payment_method') is-invalid @enderror" 
                                     id="payment_method" name="payment_method">
-                                <option value="cash" {{ old('payment_method') === 'cash' ? 'selected' : '' }}>{{ __('enrollments.cash') }}</option>
-                                <option value="bank_transfer" {{ old('payment_method') === 'bank_transfer' ? 'selected' : '' }}>{{ __('enrollments.bank_transfer') }}</option>
-                                <option value="credit_card" {{ old('payment_method') === 'credit_card' ? 'selected' : '' }}>{{ __('enrollments.credit_card') }}</option>
-                                <option value="check" {{ old('payment_method') === 'check' ? 'selected' : '' }}>{{ __('enrollments.check') }}</option>
+                                <option value="cash" {{ old('payment_method') === 'cash' ? 'selected' : '' }}>{{ __('payments.cash') }}</option>
+                                <option value="bank_transfer" {{ old('payment_method') === 'bank_transfer' ? 'selected' : '' }}>{{ __('payments.bank_transfer') }}</option>
+                                <option value="credit_card" {{ old('payment_method') === 'credit_card' ? 'selected' : '' }}>{{ __('payments.credit_card') }}</option>
+                                <option value="check" {{ old('payment_method') === 'check' ? 'selected' : '' }}>{{ __('payments.check') }}</option>
+                                <option value="zaincash" {{ old('payment_method') === 'zaincash' ? 'selected' : '' }}>{{ __('payments.zaincash') }}</option>
+                                <option value="other" {{ old('payment_method') === 'other' ? 'selected' : '' }}>{{ __('payments.other') }}</option>
                             </select>
                             @error('payment_method')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4" id="jod_equivalent_section" style="display: none;">
+                        <div class="col-md-12">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <span id="jod_equivalent_text"></span>
+                            </div>
                         </div>
                     </div>
 
@@ -257,8 +302,34 @@ $(document).ready(function() {
         const paidAmount = parseFloat($('#paid_amount').val()) || 0;
         const dueAmount = totalAmount - paidAmount;
         
-        // You can add a due amount display here if needed
+        updateJODEquivalent();
     });
+
+    // Currency change handler - show JOD equivalent
+    $('#currency_code, #paid_amount').on('change input', function() {
+        updateJODEquivalent();
+    });
+
+    function updateJODEquivalent() {
+        const paidAmount = parseFloat($('#paid_amount').val()) || 0;
+        const currencyCode = $('#currency_code').val();
+        const exchangeRate = parseFloat($('#currency_code option:selected').data('rate')) || 1;
+        
+        if (paidAmount > 0 && currencyCode && currencyCode !== 'JOD') {
+            const amountInJOD = paidAmount * exchangeRate;
+            const currencyName = $('#currency_code option:selected').text();
+            
+            $('#jod_equivalent_text').html(
+                `<strong>${paidAmount.toFixed(2)} ${currencyCode}</strong> = <strong>${amountInJOD.toFixed(2)} JD</strong> {{ __('currencies.equivalent_in_jod') }}`
+            );
+            $('#jod_equivalent_section').slideDown();
+        } else {
+            $('#jod_equivalent_section').slideUp();
+        }
+    }
+
+    // Initialize on page load
+    updateJODEquivalent();
 });
 </script>
 @endpush

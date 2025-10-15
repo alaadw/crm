@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', '{{ __("follow_ups.follow_up_details") }} - CRM Academy')
+@section('title', __("follow_ups.follow_up_details") . ' - CRM Academy')
 
 @section('content')
 <div class="row">

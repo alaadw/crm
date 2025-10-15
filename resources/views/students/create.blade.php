@@ -197,6 +197,30 @@
                     </div>
 
                     <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="university" class="form-label">{{ __('students.university') }}</label>
+                            <input type="text" class="form-control @error('university') is-invalid @enderror" id="university" name="university" value="{{ old('university') }}" placeholder="{{ __('students.university') }}">
+                            @error('university')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-4">
+                            <label for="major" class="form-label">{{ __('students.major') }}</label>
+                            <input type="text" class="form-control @error('major') is-invalid @enderror" id="major" name="major" value="{{ old('major') }}" placeholder="{{ __('students.major') }}">
+                            @error('major')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-4">
+                            <label for="college" class="form-label">{{ __('students.college') }}</label>
+                            <input type="text" class="form-control @error('college') is-invalid @enderror" id="college" name="college" value="{{ old('college') }}" placeholder="{{ __('students.college') }}">
+                            @error('college')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="reach_source" class="form-label">
                                 {{ __('students.how_did_they_reach_us') }} <span class="text-danger">*</span>
@@ -205,8 +229,13 @@
                                     id="reach_source" name="reach_source" required>
                                 <option value="">{{ __('students.select_source') }}</option>
                                 @foreach($reachSources as $source)
+                                    @php
+                                        $key = strtolower(str_replace(' ', '_', $source));
+                                        $label = __("students.$key");
+                                        if ($label === "students.$key") { $label = $source; }
+                                    @endphp
                                     <option value="{{ $source }}" {{ old('reach_source') === $source ? 'selected' : '' }}>
-                                        {{ $source }}
+                                        {{ $label }}
                                     </option>
                                 @endforeach
                             </select>

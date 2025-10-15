@@ -25,6 +25,9 @@ class Student extends Model
         'department',
         'department_category_id',
         'preferred_course_id',
+        'university',
+        'major',
+        'college',
         'notes',
     ];
 
@@ -162,6 +165,12 @@ class Student extends Model
         return $this->department ?? '';
     }
 
+    // Accessor for name (maps to full_name for backward compatibility)
+    public function getNameAttribute(): string
+    {
+        return $this->full_name ?? '';
+    }
+
     public function getFormattedPhonePrimaryAttribute(): string
     {
         return app(PhoneService::class)->formatForDisplay($this->phone_primary);
@@ -173,5 +182,17 @@ class Student extends Model
             return null;
         }
         return app(PhoneService::class)->formatForDisplay($this->phone_alt);
+    }
+
+    // Localized label for reach_source (keeps stored enum values intact)
+    public function getReachSourceLabelAttribute(): string
+    {
+        $value = $this->reach_source ?? '';
+        if ($value === '') {
+            return '';
+        }
+        $key = strtolower(str_replace(' ', '_', $value));
+        $label = __("students.$key");
+        return $label === "students.$key" ? $value : $label;
     }
 }

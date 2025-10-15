@@ -7,6 +7,7 @@ use App\Models\Student;
 use App\Models\Enrollment;
 use App\Models\Payment;
 use App\Models\CourseClass;
+use App\Models\Currency;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Exception;
@@ -70,9 +71,10 @@ class EnrollmentService
             'course_class_id' => 'required|exists:course_classes,id',
             'total_amount' => 'required|numeric|min:0',
             'paid_amount' => 'nullable|numeric|min:0',
+            'currency_code' => 'nullable|exists:currencies,code',
             'enrollment_date' => 'required|date',
             'notes' => 'nullable|string|max:1000',
-            'payment_method' => 'nullable|in:cash,bank_transfer,credit_card,check',
+            'payment_method' => 'nullable|in:cash,bank_transfer,credit_card,check,zaincash,other',
         ]);
 
         if ($validator->fails()) {
@@ -181,35 +183,50 @@ class EnrollmentService
                 throw new Exception(implode(', ', $validationErrors));
             }
 
-            // Calculate payment details
-            $totalAmount = $data['total_amount'] ?? $courseClass->default_price ?? 0;
-            $paidAmount = $data['paid_amount'] ?? 0;
-            $dueAmount = $totalAmount - $paidAmount;
+            // Get currency and calculate amounts in JOD
+            $currencyCode = $data['currency_code'] ?? 'JOD';
+            $currency = \App\Models\Currency::where('code', $currencyCode)->first();
+            $exchangeRate = $currency->exchange_rate_to_jod ?? 1;
+            
+            // Total amount in original currency
+            $totalAmountOriginal = $data['total_amount'] ?? $courseClass->default_price ?? 0;
+            $paidAmountOriginal = $data['paid_amount'] ?? 0;
+            
+            // Convert to JOD for enrollment table
+            $totalAmountJOD = $currency ? $currency->convertToJOD($totalAmountOriginal) : $totalAmountOriginal;
+            $paidAmountJOD = $currency ? $currency->convertToJOD($paidAmountOriginal) : $paidAmountOriginal;
+            $dueAmountJOD = $totalAmountJOD - $paidAmountJOD;
 
-            // Create enrollment
+            // Create enrollment (amounts in JOD)
             $enrollment = Enrollment::create([
                 'student_id' => $student->id,
                 'course_class_id' => $courseClass->id,
                 'registered_by' => auth()->id() ?? 1, // Default to user ID 1 if not authenticated
                 'enrollment_date' => $data['enrollment_date'],
-                'total_amount' => $totalAmount,
-                'paid_amount' => $paidAmount,
-                'due_amount' => $dueAmount,
-                'payment_status' => $this->calculatePaymentStatus($totalAmount, $paidAmount),
+                'total_amount' => $totalAmountJOD,
+                'paid_amount' => $paidAmountJOD,
+                'due_amount' => $dueAmountJOD,
+                'payment_status' => $this->calculatePaymentStatus($totalAmountJOD, $paidAmountJOD),
                 'notes' => $data['notes'] ?? null,
                 'is_active' => true,
             ]);
 
-            // Create payment record if amount paid
-            if ($paidAmount > 0) {
+            // Create payment record if amount paid (store original currency)
+            if ($paidAmountOriginal > 0) {
                 Payment::create([
                     'enrollment_id' => $enrollment->id,
-                    'received_by' => auth()->id() ?? 1, // User who received the payment
-                    'amount' => $paidAmount,
+                    'received_by' => auth()->id() ?? 1,
+                    'amount' => $paidAmountOriginal,
+                    'currency_code' => $currencyCode,
+                    'amount_in_jod' => $paidAmountJOD,
+                    'exchange_rate' => $exchangeRate,
                     'payment_method' => $data['payment_method'] ?? 'cash',
                     'payment_date' => $data['enrollment_date'],
                     'notes' => 'Initial enrollment payment',
                 ]);
+
+                // Recalculate enrollment from authoritative payment sums (handles rounding/epsilon)
+                $enrollment->recalcFromPayments();
             }
 
             return $enrollment->load(['student', 'courseClass.course', 'payments']);
@@ -277,31 +294,11 @@ class EnrollmentService
     }
 
     /**
-     * Validate payment request data
-     */
-    public function validatePaymentRequest(array $data)
-    {
-        $validator = Validator::make($data, [
-            'amount' => 'required|numeric|min:0.01',
-            'payment_method' => 'required|in:cash,bank_transfer,credit_card,check',
-            'payment_date' => 'required|date',
-            'notes' => 'nullable|string|max:1000',
-        ]);
-
-        if ($validator->fails()) {
-            throw new Exception($validator->errors()->first());
-        }
-
-        return true;
-    }
-
-    /**
      * Handle payment addition with proper response
      */
     public function handlePaymentAddition($enrollmentId, array $paymentData, $redirectRoute = null)
     {
         try {
-            $this->validatePaymentRequest($paymentData);
             $payment = $this->addPayment($enrollmentId, $paymentData);
             
             return [
@@ -327,25 +324,26 @@ class EnrollmentService
         return DB::transaction(function() use ($enrollmentId, $paymentData) {
             $enrollment = Enrollment::findOrFail($enrollmentId);
 
+            // Get currency and calculate amount in JOD
+            $currencyCode = $paymentData['currency_code'] ?? 'JOD';
+            $currency = Currency::where('code', $currencyCode)->first();
+            $amountInJOD = $currency ? $currency->convertToJOD($paymentData['amount']) : $paymentData['amount'];
+
             // Create payment
             $payment = Payment::create([
                 'enrollment_id' => $enrollment->id,
-                'received_by' => auth()->id() ?? 1, // User who received the payment
+                'received_by' => auth()->id() ?? 1,
                 'amount' => $paymentData['amount'],
+                'currency_code' => $currencyCode,
+                'amount_in_jod' => $amountInJOD,
+                'exchange_rate' => $currency->exchange_rate_to_jod ?? 1,
                 'payment_method' => $paymentData['payment_method'],
                 'payment_date' => $paymentData['payment_date'],
                 'notes' => $paymentData['notes'] ?? null,
             ]);
 
-            // Update enrollment paid amount and payment status
-            $newPaidAmount = $enrollment->paid_amount + $paymentData['amount'];
-            $newDueAmount = $enrollment->total_amount - $newPaidAmount;
-            
-            $enrollment->update([
-                'paid_amount' => $newPaidAmount,
-                'due_amount' => $newDueAmount,
-                'payment_status' => $this->calculatePaymentStatus($enrollment->total_amount, $newPaidAmount),
-            ]);
+            // Recalculate enrollment from payments to ensure consistency and avoid float drift
+            $enrollment->recalcFromPayments();
 
             return $payment->load('enrollment.student');
         });

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Student;
 use App\Models\Enrollment;
 use App\Services\EnrollmentService;
+use App\Models\Currency;
 use Illuminate\Http\Request;
 
 class EnrollmentController extends Controller
@@ -26,8 +27,11 @@ class EnrollmentController extends Controller
         // Get available departments and course classes data
         $departments = $this->enrollmentService->getAvailableDepartments();
         $courseClassesData = $this->enrollmentService->prepareCourseClassesData($departments);
+        
+        // Get active currencies
+        $currencies = Currency::getActiveCurrencies();
 
-        return view('enrollments.create', compact('student', 'departments', 'courseClassesData'));
+        return view('enrollments.create', compact('student', 'departments', 'courseClassesData', 'currencies'));
     }
 
     /**

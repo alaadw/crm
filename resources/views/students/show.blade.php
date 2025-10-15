@@ -111,9 +111,23 @@
                                 <td><strong>{{ __('students.country_code') }}:</strong></td>
                                 <td>{{ $student->country_code }}</td>
                             </tr>
+                            @if($student->university || $student->major || $student->college)
+                            <tr>
+                                <td><strong>{{ __('students.university') }} / {{ __('students.major') }} / {{ __('students.college') }}:</strong></td>
+                                <td>
+                                    {{ $student->university ?? __('common.not_provided') }}
+                                    @if($student->major)
+                                        <span class="text-muted">•</span> {{ $student->major }}
+                                    @endif
+                                    @if($student->college)
+                                        <span class="text-muted">•</span> {{ $student->college }}
+                                    @endif
+                                </td>
+                            </tr>
+                            @endif
                             <tr>
                                 <td><strong>{{ __('students.reach_source') }}:</strong></td>
-                                <td>{{ $student->reach_source }}</td>
+                                <td>{{ $student->reach_source_label }}</td>
                             </tr>
                         </table>
                     </div>

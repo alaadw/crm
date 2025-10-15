@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Student;
 use App\Models\Enrollment;
 use App\Services\EnrollmentService;
+use App\Http\Requests\StorePaymentRequest;
 use Illuminate\Http\Request;
 
 class PaymentController extends Controller
@@ -19,13 +20,8 @@ class PaymentController extends Controller
     /**
      * Store a new payment for a student's enrollment
      */
-    public function storeStudentPayment(Request $request, Student $student)
+    public function storeStudentPayment(StorePaymentRequest $request, Student $student)
     {
-        // Additional validation for student-specific payment
-        $request->validate([
-            'enrollment_id' => 'required|exists:enrollments,id',
-        ]);
-
         // Verify that the enrollment belongs to the student
         $enrollment = Enrollment::where('id', $request->enrollment_id)
             ->where('student_id', $student->id)
@@ -38,16 +34,12 @@ class PaymentController extends Controller
             ]);
         }
 
-        // Check if payment amount doesn't exceed due amount
-        if ($request->amount > $enrollment->due_amount) {
-            return redirect()->back()->withErrors([
-                'amount' => __('payments.amount_exceeds_due_amount', ['due' => number_format($enrollment->due_amount, 2)])
-            ]);
-        }
+        // Skip direct amount vs due comparison here because amount may be in a different currency.
+        // EnrollmentService will handle currency conversion and updates safely.
 
         $result = $this->enrollmentService->handlePaymentAddition(
             $enrollment->id, 
-            $request->all(),
+            $request->validated(),
             route('students.show', $student)
         );
 
@@ -64,7 +56,7 @@ class PaymentController extends Controller
     /**
      * Store a new payment for an enrollment from class view
      */
-    public function storeEnrollmentPayment(Request $request, Enrollment $enrollment)
+    public function storeEnrollmentPayment(StorePaymentRequest $request, Enrollment $enrollment)
     {
         // Verify that the enrollment is active
         if (!$enrollment->is_active) {
@@ -73,16 +65,11 @@ class PaymentController extends Controller
             ]);
         }
 
-        // Check if payment amount doesn't exceed due amount
-        if ($request->amount > $enrollment->due_amount) {
-            return redirect()->back()->withErrors([
-                'amount' => __('payments.amount_exceeds_due_amount', ['due' => number_format($enrollment->due_amount, 2)])
-            ]);
-        }
-
+        // Note: No amount validation here as payment can be in different currency
+        
         $result = $this->enrollmentService->handlePaymentAddition(
             $enrollment->id, 
-            $request->all(),
+            $request->validated(),
             route('classes.show', $enrollment->course_class_id)
         );
 
@@ -115,9 +102,21 @@ class PaymentController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StorePaymentRequest $request)
     {
-        //
+        $result = $this->enrollmentService->handlePaymentAddition(
+            $request->enrollment_id, 
+            $request->validated()
+        );
+
+        if ($result['success']) {
+            return redirect()->back()
+                ->with('success', $result['message']);
+        } else {
+            return redirect()->back()
+                ->withInput($result['input'])
+                ->withErrors(['error' => $result['error']]);
+        }
     }
 
     /**
@@ -150,5 +149,40 @@ class PaymentController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    /**
+     * Return payments for an enrollment (AJAX)
+     */
+    public function enrollmentPayments(Enrollment $enrollment)
+    {
+        $enrollment->load(['payments' => function($q) {
+            $q->orderByDesc('payment_date');
+        }, 'student']);
+
+        $data = [
+            'student' => [
+                'id' => $enrollment->student?->id,
+                'name' => $enrollment->student?->name,
+            ],
+            'totals' => [
+                'total_amount' => (float) $enrollment->total_amount,
+                'paid_amount' => (float) $enrollment->paid_amount,
+                'due_amount' => (float) $enrollment->due_amount,
+            ],
+            'payments' => $enrollment->payments->map(function($p) {
+                return [
+                    'id' => $p->id,
+                    'date' => optional($p->payment_date)->format('Y-m-d'),
+                    'amount' => $p->amount,
+                    'currency' => $p->currency_code,
+                    'formatted_amount' => $p->formatted_amount,
+                    'method' => $p->payment_method_label,
+                    'notes' => $p->notes,
+                ];
+            }),
+        ];
+
+        return response()->json($data);
     }
 }

@@ -5,6 +5,8 @@ use App\Http\Controllers\StudentController;
 use App\Http\Controllers\FollowUpController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\CourseClassController;
 
 // Redirect root to students index
 Route::get('/', function () {
@@ -28,12 +30,11 @@ Route::get('language/{locale}', function ($locale) {
 Route::middleware(['auth'])->group(function () {
     // Student routes
     Route::resource('students', StudentController::class);
+    Route::post('students/import', [StudentController::class, 'import'])->name('students.import');
     Route::get('student-search', [StudentController::class, 'search'])->name('students.search');
     Route::get('courses-by-department', [StudentController::class, 'getCoursesByDepartment'])->name('courses.by-department');
     
-    // AJAX routes for hierarchical category selection
-    Route::get('api/subcategories', [StudentController::class, 'getSubcategories'])->name('api.subcategories');
-    Route::get('api/courses-by-category', [StudentController::class, 'getCoursesByCategory'])->name('api.courses-by-category');
+    // (moved to routes/api.php) AJAX routes
 
     // Follow-up routes
     Route::resource('follow-ups', FollowUpController::class);
@@ -49,16 +50,16 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('enrollments/{enrollment}', [EnrollmentController::class, 'destroy'])->name('enrollments.destroy');
 
     // Payment routes
-    Route::post('students/{student}/payments', [\App\Http\Controllers\PaymentController::class, 'storeStudentPayment'])->name('students.payments.store');
-    Route::post('enrollments/{enrollment}/payments', [\App\Http\Controllers\PaymentController::class, 'storeEnrollmentPayment'])->name('enrollments.payments.store');
+    Route::post('students/{student}/payments', [PaymentController::class, 'storeStudentPayment'])->name('students.payments.store');
+    Route::post('enrollments/{enrollment}/payments', [PaymentController::class, 'storeEnrollmentPayment'])->name('enrollments.payments.store');
 
     // Course Classes & Other routes
-    Route::resource('classes', \App\Http\Controllers\CourseClassController::class);
-    Route::resource('enrollments', \App\Http\Controllers\EnrollmentController::class);
-    Route::resource('payments', \App\Http\Controllers\PaymentController::class);
+    Route::resource('classes', CourseClassController::class);
+    Route::resource('enrollments', EnrollmentController::class);
+    Route::resource('payments', PaymentController::class);
     
     // Department Reports
-    Route::get('reports/department', [\App\Http\Controllers\CourseClassController::class, 'departmentReports'])->name('reports.department');
-    Route::get('reports/financial', [\App\Http\Controllers\CourseClassController::class, 'financialReports'])->name('reports.financial');
+    Route::get('reports/department', [CourseClassController::class, 'departmentReports'])->name('reports.department');
+    Route::get('reports/financial', [CourseClassController::class, 'financialReports'])->name('reports.financial');
 });
  

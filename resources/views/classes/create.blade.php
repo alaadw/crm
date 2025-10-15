@@ -59,30 +59,6 @@
                         </div>
 
                         <div class="row">
-                            <!-- Course -->
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="course_id" class="form-label">
-                                        {{ __('common.courses') }} <span class="text-danger">*</span>
-                                    </label>
-                                    <select class="form-select @error('course_id') is-invalid @enderror" 
-                                            id="course_id" 
-                                            name="course_id" 
-                                            required>
-                                        <option value="">{{ __('common.select_course') }}</option>
-                                        @foreach($courses as $course)
-                                            <option value="{{ $course->id }}" 
-                                                    {{ old('course_id') == $course->id ? 'selected' : '' }}>
-                                                {{ $course->name_ar }} - {{ $course->name_en }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('course_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-
                             <!-- Department -->
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -102,6 +78,25 @@
                                         @endforeach
                                     </select>
                                     @error('category_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <!-- Course -->
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="course_id" class="form-label">
+                                        {{ __('common.courses') }} <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select @error('course_id') is-invalid @enderror" 
+                                            id="course_id" 
+                                            name="course_id" 
+                                            required
+                                            disabled>
+                                        <option value="">{{ __('classes.first_select_department') }}</option>
+                                    </select>
+                                    @error('course_id')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -296,6 +291,60 @@ document.addEventListener('DOMContentLoaded', function() {
             endDateInput.value = '';
         }
     });
+
+    // Cascading dropdown: Department -> Courses
+    const departmentSelect = document.getElementById('category_id');
+    // courseSelect already declared above
+    
+    departmentSelect.addEventListener('change', function() {
+        const departmentId = this.value;
+        console.log('Department changed:', departmentId);
+        
+        // Clear current courses
+        courseSelect.innerHTML = '<option value="">{{ __("common.loading") }}...</option>';
+        courseSelect.disabled = true;
+        
+        if (!departmentId) {
+            courseSelect.innerHTML = '<option value="">{{ __("classes.first_select_department") }}</option>';
+            return;
+        }
+        
+        // Fetch courses for selected department
+        const url = `{{ route('api.courses-by-category') }}?category_id=${departmentId}`;
+        console.log('Fetching from:', url);
+        
+        fetch(url)
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
+            .then(courses => {
+                console.log('Courses received:', courses);
+                courseSelect.innerHTML = '<option value="">{{ __("common.select_course") }}</option>';
+                
+                if (courses.length > 0) {
+                    courses.forEach(course => {
+                        const option = document.createElement('option');
+                        option.value = course.id;
+                        option.textContent = `${course.name_ar || course.name} - ${course.name_en || course.name}`;
+                        courseSelect.appendChild(option);
+                    });
+                    courseSelect.disabled = false;
+                } else {
+                    courseSelect.innerHTML = '<option value="">{{ __("classes.no_courses_in_department") }}</option>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching courses:', error);
+                courseSelect.innerHTML = '<option value="">{{ __("common.error_loading") }}</option>';
+            });
+    });
+
+    // Trigger change event on page load if department is already selected
+    if (departmentSelect.value) {
+        console.log('Triggering change for pre-selected department');
+        departmentSelect.dispatchEvent(new Event('change'));
+    }
 });
 </script>
 @endsection

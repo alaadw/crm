@@ -40,6 +40,9 @@ return [
     'optional_alternative_number' => 'رقم بديل اختياري',
     'changing_phone_notice' => 'تغيير هذا سينقل الرقم القديم إلى الهاتف البديل',
     'preferred_course' => 'الدورة المفضلة',
+    'university' => 'الجامعة',
+    'major' => 'التخصص',
+    'college' => 'الكلية',
     'select_course_optional' => 'اختر الدورة (اختياري)',
     'leave_empty_if_undecided' => 'اتركه فارغاً إذا لم يقرر الطالب بعد',
     'how_did_they_reach_us' => 'كيف وصلوا إلينا؟',
@@ -74,11 +77,14 @@ return [
 
     // Lead sources
     'social_media' => 'وسائل التواصل الاجتماعي',
+    'university_circular' => 'تعليمات الجامعة',
+    'purchased_data' => 'بيانات مشتراة',
     'google_ads' => 'إعلانات جوجل',
     'referral' => 'إحالة',
     'walk_in' => 'زيارة مباشرة',
     'website' => 'الموقع الإلكتروني',
     'phone_inquiry' => 'استفسار هاتفي',
+    'old_student' => 'طالب قديم',
     'other' => 'أخرى',
 
     // Enrollment status
@@ -95,6 +101,10 @@ return [
     'total_students' => 'إجمالي الطلاب',
     'filter_by_department' => 'تصفية حسب القسم',
     'all_departments' => 'جميع الأقسام',
+    'filter_by_course' => 'تصفية حسب الدورة',
+    'all_courses' => 'جميع الدورات',
+    'no_courses_available' => 'لا توجد دورات متاحة',
+    'not_available_legacy' => 'غير متاح للأقسام القديمة',
     'filter' => 'تصفية',
     'clear' => 'مسح',
     'students_list' => 'قائمة الطلاب',
@@ -120,8 +130,8 @@ return [
     
     // Search functionality
     'search' => 'البحث',
-    'search_placeholder' => 'البحث بالاسم أو البريد الإلكتروني أو الهاتف...',
-    'search_hint' => 'البحث بالاسم العربي أو الإنجليزي أو البريد الإلكتروني أو رقم الهاتف',
+    'search_placeholder' => 'البحث بالرقم أو الاسم أو البريد الإلكتروني أو الهاتف...',
+    'search_hint' => 'البحث برقم الطالب أو الاسم العربي أو الإنجليزي أو البريد الإلكتروني أو رقم الهاتف',
     'search_filter' => 'البحث والتصفية',
     'search_results_for' => 'نتائج البحث عن',
     'filter_by_department' => 'تصفية حسب القسم',
@@ -186,6 +196,9 @@ return [
     'department_required' => 'يرجى اختيار قسم.',
     'department_invalid' => 'يرجى اختيار قسم صالح.',
     'preferred_course_invalid' => 'يرجى اختيار دورة صالحة.',
+    'university_max' => 'يجب ألا يزيد اسم الجامعة عن 255 حرفًا.',
+    'major_max' => 'يجب ألا يزيد اسم التخصص عن 255 حرفًا.',
+    'college_max' => 'يجب ألا يزيد اسم الكلية عن 255 حرفًا.',
     'notes_max' => 'يجب أن لا تزيد الملاحظات عن 1000 حرف.',
      
 ];

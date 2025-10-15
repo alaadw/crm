@@ -9,7 +9,9 @@ use App\Http\Requests\StoreStudentRequest;
 use App\Http\Requests\UpdateStudentRequest;
 use App\Services\StudentService;
 use App\Services\PhoneService;
+use App\Services\StudentImportService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Validator;
@@ -18,7 +20,8 @@ class StudentController extends Controller
 {
     public function __construct(
         private StudentService $studentService,
-        private PhoneService $phoneService
+        private PhoneService $phoneService,
+        private StudentImportService $importService,
     ) {}
 
     /**
@@ -27,6 +30,7 @@ class StudentController extends Controller
     public function index(Request $request): View
     {
         $department = $request->get('department');
+        $course = $request->get('course');
         $search = $request->get('search');
         
         $query = Student::with(['preferredCourse', 'departmentCategory']);
@@ -36,6 +40,7 @@ class StudentController extends Controller
             $query->where(function($q) use ($search) {
                 $q->where('full_name', 'LIKE', "%{$search}%")
                   ->orWhere('full_name_en', 'LIKE', "%{$search}%")
+                  ->orWhere('student_id', 'LIKE', "%{$search}%")
                   ->orWhere('email', 'LIKE', "%{$search}%")
                   ->orWhere('phone_primary', 'LIKE', "%{$search}%")
                   ->orWhere('phone_alt', 'LIKE', "%{$search}%");
@@ -45,11 +50,17 @@ class StudentController extends Controller
         // Apply department filter
         if ($department) {
             if (is_numeric($department)) {
-                $query->where('department', $department);
+                // Filter by department_category_id (new system)
+                $query->where('department_category_id', $department);
             } else {
-                // Handle legacy department names
+                // Handle legacy department names (old enum values)
                 $query->where('department', $department);
             }
+        }
+        
+        // Apply course filter
+        if ($course) {
+            $query->where('preferred_course_id', $course);
         }
         
         $students = $query->orderBy('full_name')->paginate(20);
@@ -58,9 +69,37 @@ class StudentController extends Controller
         $students->appends($request->query());
 
         $departments = $this->studentService->getDepartmentsArray();
+        
+        // Get courses based on selected department
+        $courses = [];
+        if ($department && is_numeric($department)) {
+            $courses = $this->studentService->getCoursesByDepartment($department);
+        }
+         
         $stats = $this->studentService->getStudentStats();
 
-        return view('students.index', compact('students', 'departments', 'stats', 'department', 'search'));
+        return view('students.index', compact('students', 'departments', 'courses', 'stats', 'department', 'course', 'search'));
+    }
+
+    /**
+     * Handle Excel/CSV upload to import students.
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,csv,txt',
+        ], [
+            'file.required' => __('common.file_required'),
+            'file.mimes' => __('common.file_type_invalid'),
+        ]);
+
+        $path = $request->file('file')->store('imports');
+        $fullPath = Storage::path($path);
+        $result = $this->importService->import($fullPath);
+
+        return redirect()->route('students.index')
+            ->with('status', __('common.import_completed'))
+            ->with('import_result', $result);
     }
 
     /**
@@ -242,8 +281,47 @@ class StudentController extends Controller
                     'has_children' => $category->children()->count() > 0
                 ];
             });
-
         return response()->json($subcategories);
+    }
+
+    /**
+     * Autocomplete students (AJAX JSON) for enrollment modal
+     */
+    public function autocomplete(Request $request)
+    {
+        $q = trim((string) $request->get('q'));
+        if ($q === '') {
+            return response()->json([]);
+        }
+
+        $students = Student::query()
+            ->select(['id', 'student_id', 'full_name', 'full_name_en', 'phone_primary', 'email'])
+            ->where(function($w) use ($q) {
+                $like = "%" . str_replace('%', '\\%', $q) . "%";
+                $w->where('full_name', 'like', $like)
+                  ->orWhere('full_name_en', 'like', $like)
+                  ->orWhere('student_id', 'like', $like)
+                  ->orWhere('phone_primary', 'like', $like)
+                  ->orWhere('email', 'like', $like);
+            })
+            ->orderBy('full_name')
+            ->limit(20)
+            ->get();
+
+        $results = $students->map(function($s) {
+            $label = trim($s->full_name ?: $s->full_name_en ?: '');
+            $meta = [];
+            if ($s->student_id) { $meta[] = "ID: {$s->student_id}"; }
+            if ($s->phone_primary) { $meta[] = $s->phone_primary; }
+            if ($s->email) { $meta[] = $s->email; }
+            $text = $label . (count($meta) ? ' — ' . implode(' | ', $meta) : '');
+            return [
+                'id' => $s->id,
+                'text' => $text,
+            ];
+        });
+
+        return response()->json($results);
     }
 
     /**

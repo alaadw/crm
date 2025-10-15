@@ -23,6 +23,7 @@ return [
     'paid_amount' => 'المبلغ المدفوع',
     'due_amount' => 'المبلغ المستحق',
     'amount_paid_at_enrollment' => 'المبلغ المدفوع وقت التسجيل',
+    'amount_in_selected_currency' => 'المبلغ بالعملة المحددة',
     'payment_status' => 'حالة الدفع',
     'payment_method' => 'طريقة الدفع',
     'due' => 'مستحق',

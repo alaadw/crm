@@ -22,9 +22,12 @@ class StorePaymentRequest extends FormRequest
     public function rules(): array
     {
         return [
+            // enrollment_id may come from the route (enrollments/{enrollment}/payments)
+            // prepareForValidation() will ensure it's present; keep required for both paths
             'enrollment_id' => 'required|exists:enrollments,id',
             'amount' => 'required|numeric|min:0.01',
-            'payment_method' => 'required|in:cash,bank_transfer,credit_card,check',
+            'currency_code' => 'required|exists:currencies,code',
+            'payment_method' => 'required|in:cash,bank_transfer,credit_card,check,zaincash,other',
             'payment_date' => 'required|date',
             'notes' => 'nullable|string|max:1000',
         ];
@@ -61,5 +64,19 @@ class StorePaymentRequest extends FormRequest
             'payment_date' => __('payments.payment_date'),
             'notes' => __('payments.notes'),
         ];
+    }
+
+    /**
+     * Ensure enrollment_id exists on requests that pass the enrollment via route model binding.
+     */
+    protected function prepareForValidation(): void
+    {
+        // If the route provides an Enrollment model, mirror its id into the payload
+        $routeEnrollment = $this->route('enrollment');
+        if ($routeEnrollment && !$this->has('enrollment_id')) {
+            $this->merge([
+                'enrollment_id' => is_object($routeEnrollment) ? $routeEnrollment->id : $routeEnrollment,
+            ]);
+        }
     }
 }

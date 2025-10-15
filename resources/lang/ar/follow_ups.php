@@ -109,6 +109,8 @@ return [
     'pending' => 'معلقة',
     'completed' => 'مكتملة',
     'cancelled' => 'ملغية',
+    'registered' => 'مسجل',
+    'expected_to_register' => 'متوقع التسجيل',
     
     // الإجراءات
     'update_follow_up' => 'تحديث المتابعة',
@@ -210,4 +212,39 @@ return [
         'referral_discussion' => 'مناقشة الإحالة',
         'renewal_discussion' => 'مناقشة التجديد',
     ],
+    
+    // رسائل التحقق
+    'follow_up_created' => 'تم إنشاء المتابعة بنجاح',
+    'follow_up_updated' => 'تم تحديث المتابعة بنجاح',
+    'follow_up_added' => 'تم إضافة المتابعة بنجاح',
+    'student_required' => 'الطالب مطلوب.',
+    'student_invalid' => 'يرجى اختيار طالب صالح.',
+    'scheduled_date_required' => 'تاريخ الجدولة مطلوب.',
+    'scheduled_date_invalid' => 'يرجى إدخال تاريخ جدولة صالح.',
+    'contact_method_required' => 'طريقة الاتصال مطلوبة.',
+    'contact_method_invalid' => 'يرجى اختيار طريقة اتصال صالحة.',
+    'type_required' => 'نوع المتابعة مطلوب.',
+    'type_invalid' => 'يرجى اختيار نوع متابعة صالح.',
+    'purpose_required' => 'الغرض مطلوب.',
+    'purpose_max' => 'يجب أن لا يزيد الغرض عن 1000 حرف.',
+    'notes_max' => 'يجب أن لا تزيد الملاحظات عن 1000 حرف.',
+    'priority_required' => 'الأولوية مطلوبة.',
+    'priority_invalid' => 'يرجى اختيار أولوية صالحة.',
+    'course_invalid' => 'يرجى اختيار دورة صالحة.',
+    'action_note_max' => 'يجب أن لا تزيد ملاحظة الإجراء عن 1000 حرف.',
+    'outcome_invalid' => 'يرجى اختيار نتيجة صالحة.',
+    'status_invalid' => 'يرجى اختيار حالة صالحة.',
+    'next_follow_up_date_invalid' => 'يرجى إدخال تاريخ متابعة تالي صالح.',
+    'next_follow_up_date_future' => 'تاريخ المتابعة التالي يجب أن يكون اليوم أو بعده.',
+    'cancellation_reason_invalid' => 'يرجى اختيار سبب إلغاء صالح.',
+    'cancellation_details_max' => 'يجب أن لا تزيد تفاصيل الإلغاء عن 500 حرف.',
+    
+    // أسماء الحقول
+    'student' => 'الطالب',
+    'course' => 'الدورة',
+    'action_note' => 'ملاحظة الإجراء',
+    'status' => 'الحالة',
+    'next_follow_up_date' => 'تاريخ المتابعة التالي',
+    'cancellation_reason' => 'سبب الإلغاء',
+    'cancellation_details' => 'تفاصيل الإلغاء',
 ];
