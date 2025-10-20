@@ -7,6 +7,7 @@ use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\CourseClassController;
+use App\Http\Controllers\UserController;
 
 // Redirect root to students index
 Route::get('/', function () {
@@ -44,6 +45,17 @@ Route::middleware(['auth'])->group(function () {
     Route::get('follow-ups/student/{student}', [FollowUpController::class, 'studentFollowUps'])->name('follow-ups.student');
 
     // Enrollment routes
+    // Admin: Users management for managed departments
+    Route::middleware(function ($request, $next) {
+        if (!auth()->user() || !auth()->user()->isAdmin()) {
+            abort(403);
+        }
+        return $next($request);
+    })->group(function () {
+        Route::get('users', [UserController::class, 'index'])->name('users.index');
+        Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+        Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
+    });
     Route::get('enrollments/create', [EnrollmentController::class, 'create'])->name('enrollments.create');
     Route::post('enrollments', [EnrollmentController::class, 'store'])->name('enrollments.store');
     Route::get('enrollments/{enrollment}', [EnrollmentController::class, 'show'])->name('enrollments.show');

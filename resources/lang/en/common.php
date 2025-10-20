@@ -30,6 +30,20 @@ return [
     'filters' => 'Filters',
     'apply_filters' => 'Apply Filters',
     'clear_filters' => 'Clear Filters',
+    // Users translations
+    'users' => 'Users',
+    'edit_user' => 'Edit User',
+    'managed_departments' => 'Managed Departments',
+    'select_one_or_more' => 'Select one or more',
+    'back' => 'Back',
+    'save_changes' => 'Save Changes',
+    'saved_successfully' => 'Saved successfully',
+    'not_set' => 'Not set',
+    'departments' => 'Departments',
+    'name' => 'Name',
+    'email' => 'Email',
+    'role' => 'Role',
+    'actions' => 'Actions',
 
     // Navigation
     'dashboard' => 'Dashboard',

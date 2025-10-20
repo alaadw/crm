@@ -162,4 +162,14 @@ return [
     'system' => 'النظام',
     'not_specified' => 'غير محدد',
     'yes_delete' => 'نعم، احذف',
+    // Users translations
+    'users' => 'المستخدمون',
+    'edit_user' => 'تعديل المستخدم',
+    'managed_departments' => 'الأقسام المُدارة',
+    'select_one_or_more' => 'اختر واحدًا أو أكثر',
+    'save_changes' => 'حفظ التغييرات',
+    'saved_successfully' => 'تم الحفظ بنجاح',
+    'departments' => 'الأقسام',
+    'role' => 'الدور',
+    'actions' => 'الإجراءات',
 ];
