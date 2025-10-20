@@ -39,16 +39,29 @@ class CourseClassController extends Controller
             $query->where('end_date', '<=', $request->end_date);
         }
 
-        // Apply user permissions
+        // Apply user permissions (multi-department managers)
         $user = Auth::user();
         if ($user && method_exists($user, 'isDepartmentManager') && $user->isDepartmentManager()) {
-            $query->where('category_id', $user->department);
+            $managedIds = $this->parseDepartmentIds($user->department);
+            if (!empty($managedIds)) {
+                $query->whereIn('category_id', $managedIds);
+            }
         }
 
         $classes = $query->orderBy('start_date', 'desc')->paginate(15);
         
-        // Get departments for filter
-        $departments = Category::whereIn('id', [29, 33, 56, 58])->get(); // Main departments
+        // Get departments for filter (top-level only), restricted for managers
+        $departmentsQuery = Category::query()->where('parent_id', 0);
+        if ($user && method_exists($user, 'isDepartmentManager') && $user->isDepartmentManager()) {
+            $managedIds = $this->parseDepartmentIds($user->department);
+            if (!empty($managedIds)) {
+                $departmentsQuery->whereIn('id', $managedIds);
+            } else {
+                // If no managed IDs parsed, return empty result to avoid exposing other departments
+                $departmentsQuery->whereRaw('1=0');
+            }
+        }
+        $departments = $departmentsQuery->get();
         
         // Calculate totals
         $totalClasses = $classes->total();
@@ -77,7 +90,18 @@ class CourseClassController extends Controller
      */
     public function create(): View
     {
-        $departments = Category::whereIn('id', [29, 33, 56, 58])->get();
+        // Top-level departments only; restrict to manager's departments if applicable
+        $departmentsQuery = Category::query()->where('parent_id', 0);
+        $user = Auth::user();
+        if ($user && method_exists($user, 'isDepartmentManager') && $user->isDepartmentManager()) {
+            $managedIds = $this->parseDepartmentIds($user->department);
+            if (!empty($managedIds)) {
+                $departmentsQuery->whereIn('id', $managedIds);
+            } else {
+                $departmentsQuery->whereRaw('1=0');
+            }
+        }
+        $departments = $departmentsQuery->get();
         $courses = []; // Will be loaded via AJAX when department is selected
         
         return view('classes.create', compact('courses', 'departments'));
@@ -117,7 +141,18 @@ class CourseClassController extends Controller
      */
     public function edit(CourseClass $class): View
     {
-        $departments = Category::whereIn('id', [29, 33, 56, 58])->get();
+        // Top-level departments only; restrict to manager's departments if applicable
+        $departmentsQuery = Category::query()->where('parent_id', 0);
+        $user = Auth::user();
+        if ($user && method_exists($user, 'isDepartmentManager') && $user->isDepartmentManager()) {
+            $managedIds = $this->parseDepartmentIds($user->department);
+            if (!empty($managedIds)) {
+                $departmentsQuery->whereIn('id', $managedIds);
+            } else {
+                $departmentsQuery->whereRaw('1=0');
+            }
+        }
+        $departments = $departmentsQuery->get();
         
         // Get courses for the selected department
         $courses = [];
@@ -157,5 +192,39 @@ class CourseClassController extends Controller
 
         return redirect()->route('classes.index')
                         ->with('success', 'تم حذف الشعبة بنجاح');
+    }
+    /**
+     * Parse a user's managed department IDs from various possible formats.
+     * Accepts: array of ints, comma-separated string ("29,56"), JSON array string,
+     * integer, or null. Returns an array of unique integer IDs.
+     */
+    private function parseDepartmentIds($value): array
+    {
+        if (is_array($value)) {
+            return array_values(array_unique(array_map('intval', $value)));
+        }
+
+        if (is_numeric($value)) {
+            return [intval($value)];
+        }
+
+        if (is_string($value)) {
+            $value = trim($value);
+            if ($value === '') {
+                return [];
+            }
+            // Try JSON array
+            if ((str_starts_with($value, '[') && str_ends_with($value, ']'))) {
+                $decoded = json_decode($value, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    return array_values(array_unique(array_map('intval', $decoded)));
+                }
+            }
+            // Fallback: comma/space separated list
+            $parts = preg_split('/[\s,]+/', $value);
+            return array_values(array_unique(array_map('intval', array_filter($parts, fn($p) => $p !== ''))));
+        }
+
+        return [];
     }
 }
