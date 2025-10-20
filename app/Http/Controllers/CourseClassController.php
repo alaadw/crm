@@ -42,7 +42,7 @@ class CourseClassController extends Controller
         // Apply user permissions (multi-department managers)
         $user = Auth::user();
         if ($user && method_exists($user, 'isDepartmentManager') && $user->isDepartmentManager()) {
-            $managedIds = $this->parseDepartmentIds($user->department);
+            $managedIds = method_exists($user, 'getManagedDepartmentIdsAttribute') ? $user->managed_department_ids : $this->parseDepartmentIds($user->department);
             if (!empty($managedIds)) {
                 $query->whereIn('category_id', $managedIds);
             }
@@ -53,7 +53,7 @@ class CourseClassController extends Controller
         // Get departments for filter (top-level only), restricted for managers
         $departmentsQuery = Category::query()->where('parent_id', 0);
         if ($user && method_exists($user, 'isDepartmentManager') && $user->isDepartmentManager()) {
-            $managedIds = $this->parseDepartmentIds($user->department);
+            $managedIds = method_exists($user, 'getManagedDepartmentIdsAttribute') ? $user->managed_department_ids : $this->parseDepartmentIds($user->department);
             if (!empty($managedIds)) {
                 $departmentsQuery->whereIn('id', $managedIds);
             } else {
@@ -94,7 +94,7 @@ class CourseClassController extends Controller
         $departmentsQuery = Category::query()->where('parent_id', 0);
         $user = Auth::user();
         if ($user && method_exists($user, 'isDepartmentManager') && $user->isDepartmentManager()) {
-            $managedIds = $this->parseDepartmentIds($user->department);
+            $managedIds = method_exists($user, 'getManagedDepartmentIdsAttribute') ? $user->managed_department_ids : $this->parseDepartmentIds($user->department);
             if (!empty($managedIds)) {
                 $departmentsQuery->whereIn('id', $managedIds);
             } else {
