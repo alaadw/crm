@@ -11,6 +11,10 @@ use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
 class CourseClassController extends Controller
 {
@@ -198,6 +202,97 @@ class CourseClassController extends Controller
      * Accepts: array of ints, comma-separated string ("29,56"), JSON array string,
      * integer, or null. Returns an array of unique integer IDs.
      */
+    /**
+     * Get all available Moodle courses for dropdown
+     */
+    public function getMoodleCourses()
+    {
+        try {
+            $moodleService = new \App\Services\MoodleService();
+            $courses = $moodleService->getAllCourses();
+            return response()->json(['success' => true, 'data' => $courses]);
+        } catch (\Exception $e) {
+            \Log::error('CourseClassController::getMoodleCourses Error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to fetch Moodle courses'], 500);
+        }
+    }
+
+    public function exportEnrollments(CourseClass $class)
+    {
+        $class->load(['course', 'enrollments' => function ($query) {
+            $query->where('is_active', true)->with(['student', 'registeredBy']);
+        }]);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle(__('classes.enrolled_students'));
+
+        $headers = [
+            __('students.name'),
+            __('students.email'),
+            __('students.primary_phone'),
+            __('classes.enrollment_date'),
+            __('classes.payment_status'),
+            __('classes.total_amount'),
+            __('classes.paid_amount'),
+            __('classes.due_amount'),
+            __('classes.notes'),
+            __('common.registered_by'),
+            __('classes.moodle_status'),
+        ];
+
+        foreach ($headers as $index => $heading) {
+            $column = Coordinate::stringFromColumnIndex($index + 1);
+            $sheet->setCellValue($column . '1', $heading);
+        }
+
+        $row = 2;
+        foreach ($class->enrollments as $enrollment) {
+            $student = $enrollment->student;
+            $sheet->setCellValue('A' . $row, $student?->full_name ?? '');
+            $sheet->setCellValue('B' . $row, $student?->email ?? '');
+            $sheet->setCellValue('C' . $row, $student?->formatted_phone_primary ?? $student?->phone_primary ?? '');
+            $sheet->setCellValue('D' . $row, optional($enrollment->enrollment_date)->format('Y-m-d'));
+            $sheet->setCellValue('E' . $row, $enrollment->payment_status_label ?? $enrollment->payment_status);
+            $sheet->setCellValue('F' . $row, (float) $enrollment->total_amount);
+            $sheet->setCellValue('G' . $row, (float) $enrollment->paid_amount);
+            $sheet->setCellValue('H' . $row, (float) $enrollment->due_amount);
+            $sheet->setCellValue('I' . $row, $enrollment->notes ?? '');
+            $sheet->setCellValue('J' . $row, $enrollment->registeredBy?->name ?? '');
+            $sheet->setCellValue('K' . $row, match ($enrollment->moodle_sync_status) {
+                'synced' => __('classes.moodle_status_synced'),
+                'syncing' => __('classes.moodle_status_syncing'),
+                'failed' => __('classes.moodle_status_failed'),
+                default => __('classes.moodle_status_not_synced'),
+            });
+            $row++;
+        }
+
+        foreach (range('A', 'K') as $columnId) {
+            $sheet->getColumnDimension($columnId)->setAutoSize(true);
+        }
+
+        $sheet->freezePane('A2');
+
+        $sheet->getStyle('F2:H' . max($row - 1, 2))->getNumberFormat()->setFormatCode('#,##0.00');
+
+        $filename = __('classes.export_filename', [
+            'class' => Str::slug($class->class_name ?? 'class'),
+            'date' => now()->format('Ymd_His'),
+        ]);
+
+        if (!Str::endsWith($filename, '.xlsx')) {
+            $filename .= '.xlsx';
+        }
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
     private function parseDepartmentIds($value): array
     {
         if (is_array($value)) {

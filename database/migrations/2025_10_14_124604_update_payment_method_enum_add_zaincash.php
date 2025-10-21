@@ -14,7 +14,9 @@ return new class extends Migration
     {
         // Note: Since MySQL doesn't easily support modifying enums,
         // we'll alter the column to allow zaincash
-        DB::statement("ALTER TABLE payments MODIFY COLUMN payment_method VARCHAR(50) DEFAULT 'cash'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE payments MODIFY COLUMN payment_method VARCHAR(50) DEFAULT 'cash'");
+        }
     }
 
     /**
@@ -23,6 +25,8 @@ return new class extends Migration
     public function down(): void
     {
         // Revert back if needed
-        DB::statement("ALTER TABLE payments MODIFY COLUMN payment_method VARCHAR(50) DEFAULT 'cash'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE payments MODIFY COLUMN payment_method VARCHAR(50) DEFAULT 'cash'");
+        }
     }
 };

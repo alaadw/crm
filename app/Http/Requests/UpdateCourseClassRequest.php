@@ -42,6 +42,7 @@ class UpdateCourseClassRequest extends FormRequest
             'description' => 'nullable|string',
             'max_students' => 'nullable|integer|min:1',
             'instructor_name' => 'nullable|string|max:255',
+            'moodle_course_id' => 'nullable|integer|unique:courses,moodle_course_id',
         ];
     }
 

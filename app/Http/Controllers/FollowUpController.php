@@ -27,6 +27,7 @@ class FollowUpController extends Controller
         $user = Auth::user();
         
         $todayFollowUps = $this->followUpService->getTodayFollowUps($user);
+        
         $overdueFollowUps = $this->followUpService->getOverdueFollowUps($user);
         $stats = $this->followUpService->getFollowUpStats($user);
 

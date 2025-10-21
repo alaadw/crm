@@ -8,6 +8,8 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\CourseClassController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\ExpenseTypeController;
 
 // Redirect root to students index
 Route::get('/', function () {
@@ -45,17 +47,31 @@ Route::middleware(['auth'])->group(function () {
     Route::get('follow-ups/student/{student}', [FollowUpController::class, 'studentFollowUps'])->name('follow-ups.student');
 
     // Enrollment routes
-    // Admin: Users management for managed departments
-    Route::middleware(function ($request, $next) {
-        if (!auth()->user() || !auth()->user()->isAdmin()) {
-            abort(403);
-        }
-        return $next($request);
-    })->group(function () {
-        Route::get('users', [UserController::class, 'index'])->name('users.index');
-        Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
-        Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
-    });
+    // Admin: Users management (controller enforces admin)
+    Route::get('users', [UserController::class, 'index'])->name('users.index');
+    Route::get('users/create', [UserController::class, 'create'])->name('users.create');
+    Route::post('users', [UserController::class, 'store'])->name('users.store');
+    Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+    Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
+
+    // Expenses (admin and department managers)
+    Route::get('expenses/chart-data/{period?}/{year?}/{month?}', [ExpenseController::class, 'chartData'])->name('expenses.chart-data');
+    Route::get('expenses/chart-by-type/{period?}/{year?}/{month?}', [ExpenseController::class, 'chartDataByType'])->name('expenses.chart-by-type');
+    Route::get('expenses', [ExpenseController::class, 'index'])->name('expenses.index');
+    Route::get('expenses/create', [ExpenseController::class, 'create'])->name('expenses.create');
+    Route::post('expenses', [ExpenseController::class, 'store'])->name('expenses.store');
+    Route::get('expenses/export/csv', [ExpenseController::class, 'exportCsv'])->name('expenses.export.csv');
+    Route::get('expenses/export/pdf', [ExpenseController::class, 'exportPdf'])->name('expenses.export.pdf');
+    Route::get('expenses/export/excel', [ExpenseController::class, 'exportExcel'])->name('expenses.export.excel');
+    Route::delete('expenses/{id}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
+
+    // Expense Types (admin only)
+    Route::get('expense-types', [ExpenseTypeController::class, 'index'])->name('expense-types.index');
+    Route::get('expense-types/create', [ExpenseTypeController::class, 'create'])->name('expense-types.create');
+    Route::post('expense-types', [ExpenseTypeController::class, 'store'])->name('expense-types.store');
+    Route::get('expense-types/{type}/edit', [ExpenseTypeController::class, 'edit'])->name('expense-types.edit');
+    Route::put('expense-types/{type}', [ExpenseTypeController::class, 'update'])->name('expense-types.update');
+    Route::delete('expense-types/{type}', [ExpenseTypeController::class, 'destroy'])->name('expense-types.destroy');
     Route::get('enrollments/create', [EnrollmentController::class, 'create'])->name('enrollments.create');
     Route::post('enrollments', [EnrollmentController::class, 'store'])->name('enrollments.store');
     Route::get('enrollments/{enrollment}', [EnrollmentController::class, 'show'])->name('enrollments.show');
@@ -67,6 +83,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Course Classes & Other routes
     Route::resource('classes', CourseClassController::class);
+    Route::get('classes/{class}/export-enrollments', [CourseClassController::class, 'exportEnrollments'])->name('classes.export-enrollments');
     Route::resource('enrollments', EnrollmentController::class);
     Route::resource('payments', PaymentController::class);
     

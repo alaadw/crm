@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'expenses' => 'Expenses',
+    'add_expense' => 'Add Expense',
+    'expense_type' => 'Expense Type',
+    'amount' => 'Amount',
+    'date' => 'Date',
+    'total_expenses' => 'Total Expenses',
+    'added_by' => 'Added By',
+    'created' => 'Expense added successfully',
+    'deleted' => 'Expense deleted successfully',
+    'statistics' => 'Expense Statistics',
+    'chart_type' => 'Chart Type',
+    'by_time' => 'By Time Period',
+    'by_type' => 'By Expense Type',
+    'period' => 'Period',
+    'day' => 'Daily',
+    'week' => 'Weekly',
+    'month' => 'Monthly',
+    'total_by_period' => 'Total Expenses by Period',
+    'total_by_type' => 'Total Expenses by Type',
+    'export_excel' => 'Excel',
+    'export_csv' => 'CSV',
+    'export_pdf' => 'PDF',
+    'export_filename' => 'expenses-:date.xlsx',
+    'export_pdf_filename' => 'expenses-:date.pdf',
+];

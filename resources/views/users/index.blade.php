@@ -10,6 +10,10 @@
         <i class="fas fa-users-cog me-2"></i>
         {{ __('common.users') }}
       </h1>
+      <a href="{{ route('users.create') }}" class="btn btn-primary">
+        <i class="fas fa-user-plus me-1"></i>
+        {{ __('common.add_user') }}
+      </a>
     </div>
 
     <div class="card">

@@ -22,6 +22,7 @@ class Course extends Model
         'department',
         'category_id',
         'is_active',
+        'moodle_course_id',
     ];
 
     protected $casts = [

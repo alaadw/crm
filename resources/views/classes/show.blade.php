@@ -126,10 +126,15 @@
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">{{ __('classes.enrolled_students') }}</h5>
-                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#enrollStudentModal">
-                        <i class="fas fa-plus me-1"></i>
-                        {{ __('classes.enroll_student') }}
-                    </button>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <a href="{{ route('classes.export-enrollments', $class) }}" class="btn btn-outline-success">
+                            <i class="fas fa-file-excel me-1"></i>{{ __('classes.export_enrollments') }}
+                        </a>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#enrollStudentModal">
+                            <i class="fas fa-plus me-1"></i>
+                            {{ __('classes.enroll_student') }}
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
                     @if($class->enrollments->where('is_active', true)->count() > 0)
@@ -143,11 +148,39 @@
                                         <th>{{ __('classes.paid_amount') }}</th>
                                         <th>{{ __('classes.due_amount') }}</th>
                                         <th>{{ __('classes.payment_status') }}</th>
+                                        <th>{{ __('classes.moodle_status') }}</th>
                                         <th>{{ __('common.actions') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach($class->enrollments->where('is_active', true) as $enrollment)
+                                    @php
+                                        $moodleStatus = $enrollment->moodle_sync_status ?? 'not_synced';
+                                        $statusLabel = match ($moodleStatus) {
+                                            'synced' => __('classes.moodle_status_synced'),
+                                            'syncing' => __('classes.moodle_status_syncing'),
+                                            'failed' => __('classes.moodle_status_failed'),
+                                            default => __('classes.moodle_status_not_synced'),
+                                        };
+                                        $statusColor = match ($moodleStatus) {
+                                            'synced' => 'success',
+                                            'syncing' => 'info',
+                                            'failed' => 'danger',
+                                            default => 'secondary',
+                                        };
+                                        $buttonClass = match ($moodleStatus) {
+                                            'synced' => 'btn-success',
+                                            'syncing' => 'btn-outline-info',
+                                            'failed' => 'btn-outline-danger',
+                                            default => 'btn-outline-secondary',
+                                        };
+                                        $iconClass = match ($moodleStatus) {
+                                            'synced' => 'fas fa-check',
+                                            'syncing' => 'fas fa-spinner fa-spin',
+                                            'failed' => 'fas fa-exclamation-triangle',
+                                            default => 'fas fa-cloud-upload-alt',
+                                        };
+                                    @endphp
                                     <tr>
                                         <td>
                                             <strong>{{ $enrollment->student->full_name ?? 'N/A' }}</strong>
@@ -166,8 +199,29 @@
                                                 <span class="badge bg-danger">{{ __('classes.unpaid') }}</span>
                                             @endif
                                         </td>
+                                            <td class="moodle-status-cell" data-enrollment-id="{{ $enrollment->id }}">
+                                                <span class="badge bg-{{ $statusColor }} moodle-status-badge">{{ $statusLabel }}</span>
+                                                <div class="small text-muted moodle-status-time {{ $enrollment->moodle_enrolled_at ? '' : 'd-none' }}">
+                                                    {{ $enrollment->moodle_enrolled_at ? $enrollment->moodle_enrolled_at->format('Y-m-d H:i') : '' }}
+                                                </div>
+                            @if($enrollment->moodle_last_error)
+                                                <div class="small text-danger moodle-status-error">
+                                                    {{ \Illuminate\Support\Str::limit($enrollment->moodle_last_error, 70) }}
+                                                </div>
+                            @else
+                                                <div class="small text-danger moodle-status-error d-none"></div>
+                            @endif
+                                            </td>
                                         <td>
                                             <div class="btn-group btn-group-sm">
+                            <button type="button"
+                                class="btn btn-sm {{ $buttonClass }} sync-moodle-btn"
+                                                            data-enrollment-id="{{ $enrollment->id }}"
+                                                            data-sync-url="{{ route('api.enrollments.sync-moodle', $enrollment) }}"
+                                                            data-status="{{ $moodleStatus }}"
+                                                            title="{{ __('classes.sync_to_moodle') }}">
+                                                        <i class="{{ $iconClass }}"></i>
+                                                    </button>
                                                 <button class="btn btn-outline-primary view-payments-btn" 
                                                         title="{{ __('classes.view_payments') }}"
                                                         data-enrollment-id="{{ $enrollment->id }}"
@@ -466,6 +520,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     // Payment modal functionality
     const addPaymentButtons = document.querySelectorAll('.add-payment-btn');
     const addPaymentForm = document.getElementById('addPaymentForm');
@@ -543,7 +598,7 @@ document.addEventListener('DOMContentLoaded', function() {
             clearPaymentsTable();
             paymentsLoader.style.display = 'block';
 
-            fetch(`/api/enrollments/${enrollmentId}/payments`, { headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') } })
+            fetch(`/api/enrollments/${enrollmentId}/payments`, { headers: { 'X-CSRF-TOKEN': csrfToken } })
                 .then(r => r.ok ? r.json() : Promise.reject())
                 .then(data => {
                     paymentsLoader.style.display = 'none';
@@ -565,6 +620,128 @@ document.addEventListener('DOMContentLoaded', function() {
                 .catch(() => {
                     paymentsLoader.style.display = 'none';
                 });
+        });
+    });
+
+    // Moodle sync buttons
+    const moodleStatusLabels = {
+        synced: @json(__('classes.moodle_status_synced')),
+        syncing: @json(__('classes.moodle_status_syncing')),
+        failed: @json(__('classes.moodle_status_failed')),
+        not_synced: @json(__('classes.moodle_status_not_synced')),
+    };
+    const moodleSyncFallback = @json(__('classes.moodle_sync_failed'));
+
+    function updateMoodleStatusCell(enrollmentId, status, syncedAt = '', errorMessage = '') {
+        const cell = document.querySelector(`.moodle-status-cell[data-enrollment-id="${enrollmentId}"]`);
+        if (!cell) {
+            return;
+        }
+
+        const badge = cell.querySelector('.moodle-status-badge');
+        const timeEl = cell.querySelector('.moodle-status-time');
+        const errorEl = cell.querySelector('.moodle-status-error');
+
+        if (badge) {
+            badge.classList.remove('bg-success', 'bg-info', 'bg-danger', 'bg-secondary');
+            const badgeClass = status === 'synced'
+                ? 'bg-success'
+                : status === 'syncing'
+                    ? 'bg-info'
+                    : status === 'failed'
+                        ? 'bg-danger'
+                        : 'bg-secondary';
+            badge.classList.add(badgeClass);
+            badge.textContent = moodleStatusLabels[status] ?? moodleStatusLabels.not_synced;
+        }
+
+        if (timeEl) {
+            if (syncedAt) {
+                timeEl.textContent = syncedAt;
+                timeEl.classList.remove('d-none');
+            } else {
+                timeEl.textContent = '';
+                timeEl.classList.add('d-none');
+            }
+        }
+
+        if (errorEl) {
+            if (errorMessage) {
+                const trimmed = errorMessage.length > 90 ? `${errorMessage.substring(0, 87)}…` : errorMessage;
+                errorEl.textContent = trimmed;
+                errorEl.classList.remove('d-none');
+            } else {
+                errorEl.textContent = '';
+                errorEl.classList.add('d-none');
+            }
+        }
+    }
+
+    function setMoodleButtonState(button, status) {
+        const icon = button.querySelector('i');
+        button.classList.remove('btn-success', 'btn-outline-secondary', 'btn-outline-danger', 'btn-outline-info');
+        const btnClass = status === 'synced'
+            ? 'btn-success'
+            : status === 'syncing'
+                ? 'btn-outline-info'
+                : status === 'failed'
+                    ? 'btn-outline-danger'
+                    : 'btn-outline-secondary';
+        button.classList.add(btnClass);
+
+        if (icon) {
+            icon.className = status === 'synced'
+                ? 'fas fa-check'
+                : status === 'syncing'
+                    ? 'fas fa-spinner fa-spin'
+                    : status === 'failed'
+                        ? 'fas fa-exclamation-triangle'
+                        : 'fas fa-cloud-upload-alt';
+        }
+
+        button.dataset.status = status;
+        button.disabled = status === 'syncing';
+    }
+
+    const syncButtons = document.querySelectorAll('.sync-moodle-btn');
+    syncButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const url = this.dataset.syncUrl;
+            const enrollmentId = this.dataset.enrollmentId;
+            if (!url || !enrollmentId || !csrfToken) {
+                return;
+            }
+
+            setMoodleButtonState(this, 'syncing');
+            updateMoodleStatusCell(enrollmentId, 'syncing', '', '');
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            }).then(async response => {
+                const data = await response.json().catch(() => ({}));
+                if (response.ok && data?.success) {
+                    return data;
+                }
+                const errorMessage = data?.error || data?.message || moodleSyncFallback;
+                throw new Error(errorMessage);
+            }).then(data => {
+                const syncedAt = data.data?.synced_at || '';
+                setMoodleButtonState(this, 'synced');
+                updateMoodleStatusCell(enrollmentId, 'synced', syncedAt, '');
+                this.setAttribute('title', data.message || '');
+                this.blur();
+            }).catch(error => {
+                const message = error?.message || moodleSyncFallback;
+                setMoodleButtonState(this, 'failed');
+                updateMoodleStatusCell(enrollmentId, 'failed', '', message);
+                this.setAttribute('title', message);
+                this.blur();
+            });
         });
     });
 
@@ -602,7 +779,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function searchStudents(q) {
         if (abortCtrl) abortCtrl.abort();
         abortCtrl = new AbortController();
-        fetch(`/api/students/autocomplete?q=${encodeURIComponent(q)}`, { signal: abortCtrl.signal, headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') } })
+    fetch(`/api/students/autocomplete?q=${encodeURIComponent(q)}`, { signal: abortCtrl.signal, headers: { 'X-CSRF-TOKEN': csrfToken } })
             .then(r => r.ok ? r.json() : [])
             .then(data => renderStudentResults(data))
             .catch(() => {});

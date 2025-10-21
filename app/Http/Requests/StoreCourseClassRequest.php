@@ -34,6 +34,7 @@ class StoreCourseClassRequest extends FormRequest
             'max_students' => 'nullable|integer|min:1',
             'instructor_name' => 'nullable|string|max:255',
             'status' => 'nullable|in:registration,in_progress,completed',
+            'moodle_course_id' => 'nullable|integer|unique:courses,moodle_course_id',
         ];
     }
 

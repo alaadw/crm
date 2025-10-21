@@ -109,7 +109,7 @@
                         @error('file')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                        <div class="form-text"></div>
+                         
                     </div>
                     <div class="col-md-3 d-flex align-items-end">
                         <button type="submit" class="btn btn-outline-success">

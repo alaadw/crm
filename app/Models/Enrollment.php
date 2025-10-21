@@ -27,6 +27,9 @@ class Enrollment extends Model
         'payment_status',
         'notes',
         'is_active',
+        'moodle_sync_status',
+        'moodle_enrolled_at',
+        'moodle_last_error',
     ];
 
     protected $casts = [
@@ -35,6 +38,7 @@ class Enrollment extends Model
         'paid_amount' => 'decimal:2',
         'due_amount' => 'decimal:2',
         'is_active' => 'boolean',
+        'moodle_enrolled_at' => 'datetime',
     ];
 
     // Relationships

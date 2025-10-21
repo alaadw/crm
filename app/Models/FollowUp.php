@@ -54,7 +54,7 @@ class FollowUp extends Model
     // Scopes
     public function scopeDueToday($query)
     {
-        return $query->where('scheduled_date', '>=', Carbon::today())
+        return $query->where('scheduled_date', '>=', Carbon::today()->subDay())
                     ->where('scheduled_date', '<', Carbon::tomorrow())
                     ->where('status', 'pending');
     }
@@ -84,6 +84,16 @@ class FollowUp extends Model
     {
         return $query->whereHas('student', function ($q) use ($department) {
             $q->where('department', $department);
+        });
+    }
+
+    public function scopeByDepartmentCategories($query, array $categoryIds)
+    {
+        if (empty($categoryIds)) {
+            return $query->whereRaw('1=0');
+        }
+        return $query->whereHas('student', function ($q) use ($categoryIds) {
+            $q->whereIn('department_category_id', $categoryIds);
         });
     }
 

@@ -29,11 +29,14 @@ class Student extends Model
         'major',
         'college',
         'notes',
+        'moodle_user_id',
+        'moodle_user_synced_at',
     ];
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'moodle_user_synced_at' => 'datetime',
     ];
 
     public function preferredCourse(): BelongsTo
@@ -84,6 +87,14 @@ class Student extends Model
     public function scopeByDepartment($query, string $department)
     {
         return $query->where('department', $department);
+    }
+
+    public function scopeByDepartmentCategories($query, array $categoryIds)
+    {
+        if (empty($categoryIds)) {
+            return $query->whereRaw('1=0');
+        }
+        return $query->whereIn('department_category_id', $categoryIds);
     }
 
     public function scopeWithActiveFollowUps($query)

@@ -26,6 +26,9 @@
         .language-switcher .btn:hover {
             background: rgba(255,255,255,0.1);
         }
+        .bg-primary {
+            background-color: #061450  !important;
+        }
     </style>
     
     @stack('styles')
@@ -36,7 +39,7 @@
         <div class="container">
             <a class="navbar-brand" href="{{ route('students.index') }}">
                 <i class="fas fa-graduation-cap me-2"></i>
-                CRM Academy
+                CRM
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -66,6 +69,33 @@
                             {{ __('common.classes') }}
                         </a>
                     </li>
+                    @if(Auth::user() && (Auth::user()->isAdmin() || Auth::user()->isDepartmentManager()))
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('expenses.*') ? 'active' : '' }}" 
+                           href="{{ route('expenses.index') }}">
+                            <i class="fas fa-file-invoice-dollar me-1"></i>
+                            {{ __('expenses.expenses') }}
+                        </a>
+                    </li>
+                    @endif
+                        @if(Auth::user() && Auth::user()->isAdmin())
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('expense-types.*') ? 'active' : '' }}" 
+                               href="{{ route('expense-types.index') }}">
+                                <i class="fas fa-list me-1"></i>
+                                {{ __('expense_types.expense_types') }}
+                            </a>
+                        </li>
+                        @endif
+                        @if(Auth::user() && Auth::user()->isAdmin())
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}" 
+                               href="{{ route('users.index') }}">
+                                <i class="fas fa-users-cog me-1"></i>
+                                {{ __('common.users') }}
+                            </a>
+                        </li>
+                        @endif
                 </ul>
                 
                 @auth

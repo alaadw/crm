@@ -24,16 +24,21 @@ class FollowUpService
             ->orderBy('priority')
             ->orderBy('scheduled_date')
             ->orderBy('created_at');
-
+        
         // Only apply user filters if user is authenticated and has role methods
         if ($user && method_exists($user, 'isSalesRep')) {
             if ($user->isSalesRep()) {
                 $query->byUser($user->id);
             } elseif ($user->isDepartmentManager()) {
-                $query->byDepartment($user->department);
+                $ids = method_exists($user, 'getManagedDepartmentIdsAttribute') ? $user->managed_department_ids : [];
+                if (!empty($ids)) {
+                    $query->byDepartmentCategories($ids);
+                } elseif (!empty($user->department)) {
+                    $query->byDepartment($user->department);
+                }
             }
         }
-
+        
         return $query->get();
     }
 
@@ -56,7 +61,12 @@ class FollowUpService
             if ($user->isSalesRep()) {
                 $query->byUser($user->id);
             } elseif ($user->isDepartmentManager()) {
-                $query->byDepartment($user->department);
+                $ids = method_exists($user, 'getManagedDepartmentIdsAttribute') ? $user->managed_department_ids : [];
+                if (!empty($ids)) {
+                    $query->byDepartmentCategories($ids);
+                } elseif (!empty($user->department)) {
+                    $query->byDepartment($user->department);
+                }
             }
         }
 
@@ -79,7 +89,12 @@ class FollowUpService
             if ($user->isSalesRep()) {
                 $query->byUser($user->id);
             } elseif ($user->isDepartmentManager()) {
-                $query->byDepartment($user->department);
+                $ids = method_exists($user, 'getManagedDepartmentIdsAttribute') ? $user->managed_department_ids : [];
+                if (!empty($ids)) {
+                    $query->byDepartmentCategories($ids);
+                } elseif (!empty($user->department)) {
+                    $query->byDepartment($user->department);
+                }
             }
         }
 
@@ -248,7 +263,12 @@ class FollowUpService
                 $q->where('user_id', $user->id);
             });
         } elseif ($user->isDepartmentManager()) {
-            $query->byDepartment($user->department);
+            $ids = method_exists($user, 'getManagedDepartmentIdsAttribute') ? $user->managed_department_ids : [];
+            if (!empty($ids)) {
+                $query->byDepartmentCategories($ids);
+            } elseif (!empty($user->department)) {
+                $query->byDepartment($user->department);
+            }
         }
 
         return $query->get()->filter(function ($student) {

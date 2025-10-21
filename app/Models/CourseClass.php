@@ -24,6 +24,7 @@ class CourseClass extends Model
         'max_students',
         'instructor_name',
         'is_active',
+        'moodle_course_id',
     ];
 
     protected $casts = [

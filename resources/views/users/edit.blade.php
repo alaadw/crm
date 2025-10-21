@@ -16,6 +16,23 @@
         <form method="POST" action="{{ route('users.update', $user) }}">
           @csrf
           @method('PUT')
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">{{ __('common.password') }} <small class="text-muted">({{ __('common.optional') }})</small></label>
+                <input type="password" name="password" class="form-control">
+                @error('password')
+                  <div class="text-danger small">{{ $message }}</div>
+                @enderror
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">{{ __('common.confirm_password') }} <small class="text-muted">({{ __('common.optional') }})</small></label>
+                <input type="password" name="password_confirmation" class="form-control">
+              </div>
+            </div>
+          </div>
 
           <div class="mb-3">
             <label class="form-label">{{ __('common.managed_departments') }}</label>

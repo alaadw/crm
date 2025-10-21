@@ -17,6 +17,10 @@ return [
     'create' => 'إنشاء',
     'show' => 'عرض',
     'close' => 'إغلاق',
+    'add_user' => 'إضافة مستخدم',
+    'password' => 'كلمة المرور',
+    'confirm_password' => 'تأكيد كلمة المرور',
+    'date_range' => 'نطاق التاريخ',
     'confirm' => 'تأكيد',
     'confirm_delete' => 'هل أنت متأكد من أنك تريد حذف هذا العنصر؟',
     'yes' => 'نعم',
@@ -60,6 +64,7 @@ return [
     'details' => 'التفاصيل',
     'list' => 'القائمة',
     'information' => 'المعلومات',
+    'registered_by' => 'مسجّل بواسطة',
 
     // Status values
     'active' => 'نشط',
@@ -130,6 +135,7 @@ return [
     'all' => 'الكل',
     'none' => 'لا شيء',
     'other' => 'أخرى',
+    'administration' => 'الإدارة',
     'select' => 'اختر',
     'choose' => 'اختيار',
     'browse' => 'تصفح',

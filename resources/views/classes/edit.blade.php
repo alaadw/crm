@@ -133,6 +133,33 @@
                                 </div>
                             </div>
 
+                            <!-- Moodle Course -->
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="moodle_course_id" class="form-label">
+                                        {{ __('classes.moodle_course') }}
+                                    </label>
+                                    <select class="form-select @error('moodle_course_id') is-invalid @enderror" 
+                                            id="moodle_course_id" 
+                                            name="moodle_course_id">
+                                        <option value="">{{ __('classes.select_moodle_course') }}</option>
+                                        @if($class->moodle_course_id)
+                                            <option value="{{ $class->moodle_course_id }}" selected>
+                                                {{ __('classes.current_moodle_course') }}: {{ $class->moodle_course_id }}
+                                            </option>
+                                        @endif
+                                    </select>
+                                    <small class="form-text text-muted d-block mt-1">
+                                        {{ __('classes.moodle_course_help') }}
+                                    </small>
+                                    @error('moodle_course_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
                             <!-- End Date -->
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -149,6 +176,10 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
+                            </div>
+
+                            <!-- Placeholder for alignment -->
+                            <div class="col-md-6">
                             </div>
                         </div>
 
@@ -395,6 +426,52 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Triggering change for pre-selected department');
         departmentSelect.dispatchEvent(new Event('change'));
     }
+
+    // Load Moodle courses on page load
+    const moodleCourseSelect = document.getElementById('moodle_course_id');
+    const currentMoodleCourseId = {{ $class->moodle_course_id ?? 'null' }};
+    
+    function loadMoodleCourses() {
+        fetch('{{ route("classes.moodle-courses") }}', {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Moodle courses data:', data);
+                if (data.success && data.data && data.data.length > 0) {
+                    moodleCourseSelect.innerHTML = '<option value="">{{ __("classes.select_moodle_course") }}</option>';
+                    data.data.forEach(course => {
+                        const option = document.createElement('option');
+                        option.value = course.id;
+                        option.textContent = `${course.fullname} (ID: ${course.id})`;
+                        if (currentMoodleCourseId && course.id === currentMoodleCourseId) {
+                            option.selected = true;
+                        }
+                        moodleCourseSelect.appendChild(option);
+                    });
+                    console.log('Loaded ' + data.data.length + ' Moodle courses');
+                } else {
+                    console.warn('No courses in response or success=false', data);
+                    moodleCourseSelect.innerHTML = '<option value="">{{ __("classes.no_moodle_courses") }}</option>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading Moodle courses:', error);
+                moodleCourseSelect.innerHTML = '<option value="">{{ __("classes.error_loading_moodle") }}</option>';
+            });
+    }
+    
+    // Load Moodle courses when page loads
+    loadMoodleCourses();
 });
 </script>
 @endsection

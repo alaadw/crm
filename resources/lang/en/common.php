@@ -17,6 +17,9 @@ return [
     'create' => 'Create',
     'show' => 'Show',
     'close' => 'Close',
+    'add_user' => 'Add User',
+    'password' => 'Password',
+    'confirm_password' => 'Confirm Password',
     'confirm' => 'Confirm',
     'confirm_delete' => 'Are you sure you want to delete this item?',
     'yes' => 'Yes',
@@ -74,6 +77,7 @@ return [
     'details' => 'Details',
     'list' => 'List',
     'information' => 'Information',
+    'registered_by' => 'Registered By',
 
     // Status values
     'active' => 'Active',
@@ -144,6 +148,8 @@ return [
     'all' => 'All',
     'none' => 'None',
     'other' => 'Other',
+    'administration' => 'Administration',
+    'date_range' => 'Date Range',
     'select' => 'Select',
     'choose' => 'Choose',
     'browse' => 'Browse',

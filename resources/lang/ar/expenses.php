@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'expenses' => 'المصاريف',
+    'add_expense' => 'إضافة مصروف',
+    'expense_type' => 'نوع المصروف',
+    'amount' => 'المبلغ',
+    'date' => 'التاريخ',
+    'total_expenses' => 'إجمالي المصروفات',
+    'added_by' => 'أُضيف بواسطة',
+    'created' => 'تمت إضافة المصروف بنجاح',
+    'deleted' => 'تم حذف المصروف بنجاح',
+    'statistics' => 'إحصائيات المصاريف',
+    'chart_type' => 'نوع الرسم البياني',
+    'by_time' => 'حسب الفترة الزمنية',
+    'by_type' => 'حسب نوع المصروف',
+    'period' => 'الفترة',
+    'day' => 'يومي',
+    'week' => 'أسبوعي',
+    'month' => 'شهري',
+    'total_by_period' => 'إجمالي المصروفات حسب الفترة',
+    'total_by_type' => 'إجمالي المصروفات حسب النوع',
+    'export_excel' => 'إكسل',
+    'export_csv' => 'CSV',
+    'export_pdf' => 'PDF',
+    'export_filename' => 'المصاريف-:date.xlsx',
+    'export_pdf_filename' => 'المصاريف-:date.pdf',
+];
