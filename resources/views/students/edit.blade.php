@@ -90,6 +90,28 @@
                         </div>
                     </div>
 
+                    @if(!empty($canChooseAssignedUser) && isset($assignableUsers) && $assignableUsers->isNotEmpty())
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="assigned_user_id" class="form-label">{{ __('students.assigned_user') }}</label>
+                            <select name="assigned_user_id" id="assigned_user_id" class="form-select @error('assigned_user_id') is-invalid @enderror">
+                                <option value="">{{ __('students.assigned_user_placeholder') }}</option>
+                                @foreach($assignableUsers as $assignUser)
+                                    <option value="{{ $assignUser->id }}" {{ (string)old('assigned_user_id', $student->assigned_user_id ?? $defaultAssignedUserId) === (string)$assignUser->id ? 'selected' : '' }}>
+                                        {{ $assignUser->name }}
+                                        @if($assignUser->email)
+                                            ({{ $assignUser->email }})
+                                        @endif
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('assigned_user_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                    @endif
+
                     <!-- Phone Information -->
                     <div class="row mb-3">
                         <div class="col-md-12">

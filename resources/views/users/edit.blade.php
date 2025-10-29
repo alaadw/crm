@@ -13,9 +13,45 @@
         </h5>
       </div>
       <div class="card-body">
-        <form method="POST" action="{{ route('users.update', $user) }}">
+          <form method="POST" action="{{ route('users.update', $user) }}">
           @csrf
           @method('PUT')
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">{{ __('common.name') }}</label>
+                <input type="text" name="name" class="form-control" value="{{ old('name', $user->name) }}" required>
+                @error('name')
+                  <div class="text-danger small">{{ $message }}</div>
+                @enderror
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">{{ __('common.email') }}</label>
+                <input type="email" name="email" class="form-control" value="{{ old('email', $user->email) }}" required>
+                @error('email')
+                  <div class="text-danger small">{{ $message }}</div>
+                @enderror
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">{{ __('common.responsible_manager') }}</label>
+            <select name="manager_responsible_id" class="form-select">
+              <option value="">{{ __('common.select_option') }}</option>
+              @foreach($managers as $manager)
+                <option value="{{ $manager->id }}" {{ (string) old('manager_responsible_id', $user->manager_responsible_id) === (string) $manager->id ? 'selected' : '' }}>
+                  {{ $manager->name }} ({{ $manager->email }})
+                </option>
+              @endforeach
+            </select>
+            @error('manager_responsible_id')
+              <div class="text-danger small">{{ $message }}</div>
+            @enderror
+          </div>
+
           <div class="row">
             <div class="col-md-6">
               <div class="mb-3">

@@ -7,7 +7,9 @@ return [
     'payment_history' => 'Payment History',
     'payment_date' => 'Payment Date',
     'payment_method' => 'Payment Method',
+    'currency_code' => 'Currency',
     'amount' => 'Amount',
+    'amount_jod' => 'Amount (JOD)',
     'status' => 'Status',
     'notes' => 'Notes',
     'add_payment' => 'Add Payment',
@@ -45,4 +47,24 @@ return [
     
     // Field names
     'enrollment' => 'Enrollment',
+
+    // Listing & charts
+    'statistics' => 'Payment Statistics',
+    'chart_type' => 'Chart Type',
+    'by_time' => 'By Time',
+    'by_method' => 'By Method',
+    'period' => 'Period',
+    'day' => 'Day',
+    'week' => 'Week',
+    'month' => 'Month',
+    'sales_rep' => 'Sales Representative',
+    'received_by' => 'Received By',
+    'class' => 'Class',
+    'total_amount' => 'Total Collected',
+    'total_by_period' => 'Total by period',
+    'total_by_method' => 'Total by method',
+    'week_label' => 'Week :week',
+    'print_now' => 'Print now',
+    'export_excel_filename' => 'payments_export_:date.xlsx',
+    'export_pdf_filename' => 'payments_export_:date.pdf',
 ];

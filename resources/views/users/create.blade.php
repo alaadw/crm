@@ -53,6 +53,19 @@
             @error('role')<div class="text-danger small">{{ $message }}</div>@enderror
           </div>
 
+          <div class="mb-3">
+            <label class="form-label">{{ __('common.responsible_manager') }}</label>
+            <select name="manager_responsible_id" class="form-select">
+              <option value="">{{ __('common.select_option') }}</option>
+              @foreach($managers as $manager)
+                <option value="{{ $manager->id }}" {{ (string) old('manager_responsible_id') === (string) $manager->id ? 'selected' : '' }}>
+                  {{ $manager->name }} ({{ $manager->email }})
+                </option>
+              @endforeach
+            </select>
+            @error('manager_responsible_id')<div class="text-danger small">{{ $message }}</div>@enderror
+          </div>
+
           <div class="form-check form-switch mb-3">
             <input class="form-check-input" type="checkbox" role="switch" id="is_active" name="is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }}>
             <label class="form-check-label" for="is_active">{{ __('common.active') }}</label>

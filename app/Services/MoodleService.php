@@ -24,9 +24,10 @@ public function createUser($user)
         'wstoken' => $this->token,
         'wsfunction' => 'core_user_get_users',
         'moodlewsrestformat' => 'json',
-         // Search by username
-    'criteria[0][key]' => 'username',
-    'criteria[0][value]' => trim(strtolower($user['email'])) 
+        'criteria[0][key]' => 'username',
+        'criteria[0][value]' => trim(strtolower($user['username'] ?? $user['email'] ?? '')),
+        'criteria[1][key]' => 'email',
+        'criteria[1][value]' => trim(strtolower($user['email'] ?? '')),
     ]);
 	
 	
@@ -91,7 +92,11 @@ public function createUser($user)
     
     // Check for API errors in create response
     if (isset($createResult['exception'])) {
-        throw new \Exception("Moodle User Creation Error: " . $createResult['message']);
+        $details = $createResult['message'] ?? 'Unknown error';
+        if (!empty($createResult['debuginfo'])) {
+            $details .= ' (' . $createResult['debuginfo'] . ')';
+        }
+        throw new \Exception("Moodle User Creation Error: " . $details);
     }
     
     if (isset($createResult[0]['id'])) {

@@ -182,9 +182,16 @@
                                         };
                                     @endphp
                                     <tr>
+                                        @php $student = $enrollment->student; @endphp
                                         <td>
-                                            <strong>{{ $enrollment->student->full_name ?? 'N/A' }}</strong>
-                                            <br><small class="text-muted">{{ $enrollment->student->formatted_phone_primary ?? '' }}</small>
+                                            @if($student)
+                                                <a href="{{ route('students.edit', $student) }}" class="text-decoration-none">
+                                                    <strong>{{ $student->full_name ?? 'N/A' }}</strong>
+                                                </a>
+                                                <br><small class="text-muted">{{ $student->formatted_phone_primary ?? '' }}</small>
+                                            @else
+                                                <strong>{{ __('students.not_specified') }}</strong>
+                                            @endif
                                         </td>
                                         <td>{{ $enrollment->enrollment_date->format('Y-m-d') }}</td>
                                         <td>{{ number_format($enrollment->total_amount, 0) }} JOD</td>
@@ -214,6 +221,13 @@
                                             </td>
                                         <td>
                                             <div class="btn-group btn-group-sm">
+                                                @if($student)
+                                                    <a href="{{ route('students.edit', $student) }}" 
+                                                       class="btn btn-sm btn-outline-secondary" 
+                                                       title="{{ __('students.edit_student') }}">
+                                                        <i class="fas fa-user-edit"></i>
+                                                    </a>
+                                                @endif
                             <button type="button"
                                 class="btn btn-sm {{ $buttonClass }} sync-moodle-btn"
                                                             data-enrollment-id="{{ $enrollment->id }}"

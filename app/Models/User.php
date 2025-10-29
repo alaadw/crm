@@ -27,6 +27,7 @@ class User extends Authenticatable
         'department',
         'department_category_id',
         'managed_departments',
+        'manager_responsible_id',
         'is_active',
     ];
 
@@ -97,6 +98,16 @@ class User extends Authenticatable
     public function studentsRegistered(): HasMany
     {
         return $this->hasMany(Student::class, 'registered_by_user_id');
+    }
+
+    public function responsibleManager(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'manager_responsible_id');
+    }
+
+    public function managedUsers(): HasMany
+    {
+        return $this->hasMany(User::class, 'manager_responsible_id');
     }
 
     public function departmentCategory(): BelongsTo

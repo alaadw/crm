@@ -37,6 +37,7 @@ return [
     'users' => 'Users',
     'edit_user' => 'Edit User',
     'managed_departments' => 'Managed Departments',
+    'responsible_manager' => 'Responsible Manager',
     'select_one_or_more' => 'Select one or more',
     'back' => 'Back',
     'save_changes' => 'Save Changes',
@@ -105,6 +106,8 @@ return [
     'import_completed' => 'Import completed.',
     'file_required' => 'Please select a file to upload.',
     'file_type_invalid' => 'Invalid file type. Please upload an Excel (.xlsx) or CSV file.',
+    'cannot_assign_self' => 'A user cannot be their own manager.',
+    'invalid_responsible_manager' => 'Selected manager must be an admin or department manager.',
 
     // Validation
     'required' => 'Required',
@@ -139,6 +142,7 @@ return [
     'count' => 'Count',
     'amount' => 'Amount',
     'currency' => 'JOD',
+    'currency_code_jod' => 'JOD',
     'page_title' => 'CRM - Course Academy',
     'welcome' => 'Welcome',
     'dashboard_title' => 'Dashboard',

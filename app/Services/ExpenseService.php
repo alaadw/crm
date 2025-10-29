@@ -66,27 +66,7 @@ class ExpenseService
         return $q->get();
     }
 
-    public function getDepartmentsWithVirtual()
-    {
-        $departments = $this->getDepartments();
-        
-        // Add virtual departments as collection items
-        $other = (object)[
-            'id' => 999,
-            'name' => __('common.other'),
-            'name_ar' => 'أخرى',
-            'parent_id' => 0,
-        ];
-        
-        $admin = (object)[
-            'id' => 998,
-            'name' => __('common.administration'),
-            'name_ar' => 'الإدارة',
-            'parent_id' => 0,
-        ];
-        
-        return collect([$admin, $other])->merge($departments);
-    }
+    
 
     public function createExpense(array $data)
     {

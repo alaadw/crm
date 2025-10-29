@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Student;
 use App\Models\Category;
 use App\Models\Course;
+use App\Http\Requests\ImportStudentsRequest;
+use App\Http\Requests\BulkAssignStudentsRequest;
 use App\Http\Requests\StoreStudentRequest;
 use App\Http\Requests\UpdateStudentRequest;
 use App\Services\StudentService;
 use App\Services\PhoneService;
 use App\Services\StudentImportService;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\RedirectResponse;
@@ -29,11 +32,13 @@ class StudentController extends Controller
      */
     public function index(Request $request): View
     {
-        $department = $request->get('department');
-        $course = $request->get('course');
-        $search = $request->get('search');
+    $department = $request->get('department');
+    $course = $request->get('course');
+    $search = $request->get('search');
+    $assignedUserFilter = $request->get('assigned_user_id');
+    $user = $request->user();
         
-        $query = Student::with(['preferredCourse', 'departmentCategory']);
+    $query = Student::with(['preferredCourse', 'departmentCategory', 'assignedUser']);
         
         // Apply search filter
         if ($search) {
@@ -62,13 +67,46 @@ class StudentController extends Controller
         if ($course) {
             $query->where('preferred_course_id', $course);
         }
+
+        if ($user && method_exists($user, 'isSalesRep') && $user->isSalesRep()) {
+            $query->where('assigned_user_id', $user->id);
+        } elseif ($assignedUserFilter !== null && $assignedUserFilter !== '') {
+            $query->where('assigned_user_id', $assignedUserFilter);
+        }
         
         $students = $query->orderBy('full_name')->paginate(20);
         
         // Preserve query parameters in pagination
         $students->appends($request->query());
 
-        $departments = $this->studentService->getDepartmentsArray();
+    $departments = $this->studentService->getDepartmentsArrayForUser($user);
+        $assignmentOptions = $this->studentService->getAssignmentFormOptions($user);
+        $assignableUsers = $assignmentOptions['assignableUsers'];
+        $defaultAssignedUserId = $assignmentOptions['defaultAssignedUserId'];
+        $canChooseAssignedUser = $assignmentOptions['canChooseAssignedUser'];
+        $importDepartments = [];
+        $defaultImportDepartmentId = $user?->department_category_id;
+    $showBulkAssignmentTools = $user && method_exists($user, 'isDepartmentManager') && $user->isDepartmentManager() && $assignableUsers->isNotEmpty();
+
+        if ($user && method_exists($user, 'isAdmin') && $user->isAdmin()) {
+            $importDepartments = $departments;
+            $defaultImportDepartmentId = null;
+        } elseif ($user && method_exists($user, 'isDepartmentManager') && $user->isDepartmentManager()) {
+            $managedIds = $user->managed_department_ids ?? [];
+            if (!empty($managedIds)) {
+                $importDepartments = array_filter(
+                    $departments,
+                    fn ($name, $id) => in_array((int) $id, $managedIds),
+                    ARRAY_FILTER_USE_BOTH
+                );
+
+                if (!$defaultImportDepartmentId && count($managedIds) === 1) {
+                    $defaultImportDepartmentId = $managedIds[0];
+                }
+            }
+        } else {
+            $importDepartments = $departments;
+        }
         
         // Get courses based on selected department
         $courses = [];
@@ -78,28 +116,78 @@ class StudentController extends Controller
          
         $stats = $this->studentService->getStudentStats();
 
-        return view('students.index', compact('students', 'departments', 'courses', 'stats', 'department', 'course', 'search'));
+        $selectedAssignedUser = null;
+        if ($assignedUserFilter !== null && $assignedUserFilter !== '') {
+            $selectedAssignedUser = $assignableUsers->firstWhere('id', (int)$assignedUserFilter) ?? User::find($assignedUserFilter);
+        }
+
+        return view('students.index', compact(
+            'students',
+            'departments',
+            'courses',
+            'stats',
+            'department',
+            'course',
+            'search',
+            'assignedUserFilter',
+            'selectedAssignedUser',
+            'assignableUsers',
+            'canChooseAssignedUser',
+            'importDepartments',
+            'defaultAssignedUserId',
+            'defaultImportDepartmentId',
+            'showBulkAssignmentTools'
+        ));
     }
 
     /**
      * Handle Excel/CSV upload to import students.
      */
-    public function import(Request $request)
+    public function import(ImportStudentsRequest $request)
     {
-        $request->validate([
-            'file' => 'required|file|mimes:xlsx,csv,txt',
-        ], [
-            'file.required' => __('common.file_required'),
-            'file.mimes' => __('common.file_type_invalid'),
-        ]);
+        $validated = $request->validated();
 
         $path = $request->file('file')->store('imports');
         $fullPath = Storage::path($path);
-        $result = $this->importService->import($fullPath);
+
+        $user = $request->user();
+
+        // Use centralized service to resolve assigned user & department defaults
+        $options = $this->studentService->resolveAssignmentOptions($validated, $user);
+
+        $result = $this->importService->import($fullPath, $options);
 
         return redirect()->route('students.index')
             ->with('status', __('common.import_completed'))
             ->with('import_result', $result);
+    }
+
+    public function bulkAssign(BulkAssignStudentsRequest $request): RedirectResponse
+    {
+        $data = $request->validated();
+        $user = $request->user();
+
+        $options = $this->studentService->resolveAssignmentOptions([
+            'assigned_user_id' => $data['assigned_user_id'],
+        ], $user);
+
+        $resolvedAssignedUserId = $options['assigned_user_id'];
+         if ($resolvedAssignedUserId === null || (int) $resolvedAssignedUserId !== (int) $data['assigned_user_id']) {
+            return redirect()->back()
+                ->withErrors(['assigned_user_id' => __('students.assigned_user_invalid_for_manager')])
+                ->withInput($request->only('student_ids', 'assigned_user_id'));
+        }
+
+        $updatedCount = $this->studentService->bulkAssignStudents($data['student_ids'], $resolvedAssignedUserId, $user);
+
+        if ($updatedCount === 0) {
+            return redirect()->back()
+                ->with('status', __('students.bulk_assign_none_updated'))
+                ->withInput($request->only('student_ids', 'assigned_user_id'));
+        }
+
+        return redirect()->route('students.index')
+            ->with('status', __('students.bulk_assign_success', ['count' => $updatedCount]));
     }
 
     /**
@@ -107,13 +195,22 @@ class StudentController extends Controller
      */
     public function create(): View
     {
+        $user = auth()->user();
         $departments = $this->studentService->getDepartmentsForSelect();
         $categories = $this->studentService->getCategoriesHierarchy();
         $reachSources = $this->studentService->getReachSources();
         $courses = $this->studentService->getCoursesByDepartment();
         $countryCodes = $this->phoneService->getCountryCodes();
 
-        return view('students.create', compact('departments', 'categories', 'reachSources', 'courses', 'countryCodes'));
+        $assignmentOptions = $this->studentService->getAssignmentFormOptions($user);
+
+        return view('students.create', array_merge([
+            'departments' => $departments,
+            'categories' => $categories,
+            'reachSources' => $reachSources,
+            'courses' => $courses,
+            'countryCodes' => $countryCodes,
+        ], $assignmentOptions));
     }
 
     /**
@@ -122,7 +219,12 @@ class StudentController extends Controller
     public function store(StoreStudentRequest $request): RedirectResponse
     {
         try {
-            $student = $this->studentService->createStudent($request->validated());
+            $data = $request->validated();
+            $options = $this->studentService->resolveAssignmentOptions($data, $request->user());
+            // Merge resolved options back into payload before creating
+            $data = array_merge($data, $options);
+
+            $student = $this->studentService->createStudent($data);
 
             return redirect()->route('students.show', $student)
                 ->with('success', __('students.student_created'));
@@ -169,6 +271,7 @@ class StudentController extends Controller
      */
     public function edit(Student $student): View
     {
+        $user = auth()->user();
         $departments = $this->studentService->getDepartmentsForSelect();
         $categories = $this->studentService->getCategoriesHierarchy();
         $reachSources = $this->studentService->getReachSources();
@@ -182,7 +285,16 @@ class StudentController extends Controller
         
         $countryCodes = $this->phoneService->getCountryCodes();
 
-        return view('students.edit', compact('student', 'departments', 'categories', 'reachSources', 'courses', 'countryCodes'));
+        $assignmentOptions = $this->studentService->getAssignmentFormOptions($user);
+
+        return view('students.edit', array_merge([
+            'student' => $student,
+            'departments' => $departments,
+            'categories' => $categories,
+            'reachSources' => $reachSources,
+            'courses' => $courses,
+            'countryCodes' => $countryCodes,
+        ], $assignmentOptions));
     }
 
     /**
@@ -191,7 +303,11 @@ class StudentController extends Controller
     public function update(UpdateStudentRequest $request, Student $student): RedirectResponse
     {
         try {
-            $updatedStudent = $this->studentService->updateStudent($student, $request->validated());
+            $data = $request->validated();
+            $options = $this->studentService->resolveAssignmentOptions($data, $request->user());
+            $data = array_merge($data, $options);
+
+            $updatedStudent = $this->studentService->updateStudent($student, $data);
 
             return redirect()->route('students.show', $updatedStudent)
                 ->with('success', __('students.student_updated'));

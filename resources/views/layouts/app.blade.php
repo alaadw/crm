@@ -69,6 +69,13 @@
                             {{ __('common.classes') }}
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('payments.*') ? 'active' : '' }}"
+                           href="{{ route('payments.index') }}">
+                            <i class="fas fa-hand-holding-usd me-1"></i>
+                            {{ __('payments.payments') }}
+                        </a>
+                    </li>
                     @if(Auth::user() && (Auth::user()->isAdmin() || Auth::user()->isDepartmentManager()))
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('expenses.*') ? 'active' : '' }}" 

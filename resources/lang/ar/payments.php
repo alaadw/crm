@@ -7,7 +7,9 @@ return [
     'payment_history' => 'تاريخ المدفوعات',
     'payment_date' => 'تاريخ الدفع',
     'payment_method' => 'طريقة الدفع',
+    'currency_code' => 'العملة',
     'amount' => 'المبلغ',
+    'amount_jod' => 'المبلغ (دينار)',
     'status' => 'الحالة',
     'notes' => 'ملاحظات',
     'add_payment' => 'إضافة دفعة',
@@ -45,4 +47,24 @@ return [
     
     // أسماء الحقول
     'enrollment' => 'التسجيل',
+
+    // لوحة المدفوعات والرسوم البيانية
+    'statistics' => 'إحصائيات المدفوعات',
+    'chart_type' => 'نوع الرسم البياني',
+    'by_time' => 'حسب الوقت',
+    'by_method' => 'حسب الطريقة',
+    'period' => 'الفترة',
+    'day' => 'يومي',
+    'week' => 'أسبوعي',
+    'month' => 'شهري',
+    'sales_rep' => 'مندوب المبيعات',
+    'received_by' => 'مستلم الدفعة',
+    'class' => 'الشعبة',
+    'total_amount' => 'إجمالي التحصيل',
+    'total_by_period' => 'الإجمالي حسب الفترة',
+    'total_by_method' => 'الإجمالي حسب الطريقة',
+    'week_label' => 'الأسبوع :week',
+    'print_now' => 'طباعة الآن',
+    'export_excel_filename' => 'تصدير_المدفوعات_:date.xlsx',
+    'export_pdf_filename' => 'تصدير_المدفوعات_:date.pdf',
 ];

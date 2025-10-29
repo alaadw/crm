@@ -31,6 +31,7 @@ class Student extends Model
         'notes',
         'moodle_user_id',
         'moodle_user_synced_at',
+        'assigned_user_id',
     ];
 
     protected $casts = [
@@ -42,6 +43,11 @@ class Student extends Model
     public function preferredCourse(): BelongsTo
     {
         return $this->belongsTo(Course::class, 'preferred_course_id');
+    }
+
+    public function assignedUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_user_id');
     }
 
     public function departmentCategory(): BelongsTo

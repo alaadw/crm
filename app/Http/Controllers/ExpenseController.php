@@ -41,7 +41,7 @@ class ExpenseController extends Controller
         $expenses = $query->paginate(20)->withQueryString();
         $types = $this->service->getTypes();
         $departments = $this->service->getDepartments();
-
+      
         $chartData = $expenses->groupBy('expense_type_id')->map(function($group){
             return [
                 'label' => optional($group->first()->type)->display_name ?? '—',
@@ -57,7 +57,7 @@ class ExpenseController extends Controller
     {
         $this->ensureAdminOrManager();
         $types = $this->service->getTypes();
-        $departments = $this->service->getDepartmentsWithVirtual();
+        $departments = $this->service->getDepartments();
 
         return view('expenses.create', compact('types','departments'));
     }

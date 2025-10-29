@@ -92,6 +92,8 @@ return [
     'import_completed' => 'تم إكمال الاستيراد.',
     'file_required' => 'يرجى اختيار ملف للرفع.',
     'file_type_invalid' => 'نوع الملف غير صالح. يرجى رفع ملف إكسل (.xlsx) أو CSV.',
+    'cannot_assign_self' => 'لا يمكن للمستخدم أن يكون مديرًا لنفسه.',
+    'invalid_responsible_manager' => 'يجب أن يكون المدير المحدد مشرفًا أو مدير قسم.',
 
     // Validation
     'required' => 'مطلوب',
@@ -126,6 +128,7 @@ return [
     'count' => 'العدد',
     'amount' => 'المبلغ',
     'currency' => 'دينار',
+    'currency_code_jod' => 'دينار أردني',
     'page_title' => 'نظام إدارة العلاقات - أكاديمية الدورات',
     'welcome' => 'مرحباً',
     'dashboard_title' => 'لوحة التحكم',
@@ -165,6 +168,7 @@ return [
     'not_provided' => 'غير محدد',
     'legacy' => 'قديم',
     'not_assigned' => 'غير مخصص',
+    'not_set' => 'غير محدد',
     'system' => 'النظام',
     'not_specified' => 'غير محدد',
     'yes_delete' => 'نعم، احذف',
@@ -172,6 +176,7 @@ return [
     'users' => 'المستخدمون',
     'edit_user' => 'تعديل المستخدم',
     'managed_departments' => 'الأقسام المُدارة',
+    'responsible_manager' => 'المدير المسؤول',
     'select_one_or_more' => 'اختر واحدًا أو أكثر',
     'save_changes' => 'حفظ التغييرات',
     'saved_successfully' => 'تم الحفظ بنجاح',

@@ -16,10 +16,13 @@ class StudentImportService
      * Import students from an uploaded spreadsheet (XLSX/CSV)
      * Columns: [0]=full_name (Arabic), [1]=phone (Jordan), [2]=college, [3]=major
      */
-    public function import(string $filePath): array
+    public function import(string $filePath, array $options = []): array
     {
         $created = 0; $duplicates = 0; $invalid = 0; $rows = 0;
         $errors = [];
+
+        $assignedUserId = $options['assigned_user_id'] ?? null;
+        $departmentCategoryId = $options['department_category_id'] ?? null;
 
         $spreadsheet = IOFactory::load($filePath);
         $sheet = $spreadsheet->getActiveSheet();
@@ -75,6 +78,14 @@ class StudentImportService
                 'college' => $college ?: null,
                 'major' => $major ?: null,
             ];
+
+            if ($assignedUserId) {
+                $payload['assigned_user_id'] = $assignedUserId;
+            }
+
+            if ($departmentCategoryId) {
+                $payload['department_category_id'] = (int) $departmentCategoryId;
+            }
 
             try {
                 $this->studentService->createStudent($payload);

@@ -34,6 +34,7 @@ Route::middleware(['auth'])->group(function () {
     // Student routes
     Route::resource('students', StudentController::class);
     Route::post('students/import', [StudentController::class, 'import'])->name('students.import');
+    Route::post('students/bulk-assign', [StudentController::class, 'bulkAssign'])->name('students.bulk-assign');
     Route::get('student-search', [StudentController::class, 'search'])->name('students.search');
     Route::get('courses-by-department', [StudentController::class, 'getCoursesByDepartment'])->name('courses.by-department');
     
@@ -85,6 +86,11 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('classes', CourseClassController::class);
     Route::get('classes/{class}/export-enrollments', [CourseClassController::class, 'exportEnrollments'])->name('classes.export-enrollments');
     Route::resource('enrollments', EnrollmentController::class);
+    Route::get('payments/chart-data/{period?}/{year?}/{month?}', [PaymentController::class, 'chartData'])->name('payments.chart-data');
+    Route::get('payments/chart-by-method/{period?}/{year?}/{month?}', [PaymentController::class, 'chartByMethod'])->name('payments.chart-by-method');
+    Route::get('payments/export/excel', [PaymentController::class, 'exportExcel'])->name('payments.export.excel');
+    Route::get('payments/export/pdf', [PaymentController::class, 'exportPdf'])->name('payments.export.pdf');
+    Route::get('payments/print', [PaymentController::class, 'print'])->name('payments.print');
     Route::resource('payments', PaymentController::class);
     
     // Department Reports

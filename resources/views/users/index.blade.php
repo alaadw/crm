@@ -25,6 +25,7 @@
               <th>{{ __('common.name') }}</th>
               <th>{{ __('common.email') }}</th>
               <th>{{ __('common.role') }}</th>
+              <th>{{ __('common.responsible_manager') }}</th>
               <th>{{ __('common.departments') }}</th>
               <th class="text-end">{{ __('common.actions') }}</th>
             </tr>
@@ -36,6 +37,13 @@
                 <td>{{ $u->name }}</td>
                 <td>{{ $u->email }}</td>
                 <td><span class="badge bg-secondary">{{ $u->role }}</span></td>
+                <td>
+                  @if($u->responsibleManager)
+                    {{ $u->responsibleManager->name }}
+                  @else
+                    <span class="text-muted">{{ __('common.not_set') }}</span>
+                  @endif
+                </td>
                 <td>
                   @php($ids = $u->managed_department_ids)
                   @if(!empty($ids))

@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreUserRequest;
+use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
 use App\Models\Category;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -22,11 +23,11 @@ class UserController extends Controller
     /**
      * List users (admin only)
      */
-    public function index(Request $request): View
+    public function index(): View
     {
         $this->ensureAdmin();
 
-        $users = User::orderBy('name')->paginate(15);
+        $users = User::with('responsibleManager')->orderBy('name')->paginate(15);
         $departments = Category::query()->where('parent_id', 0)->orderBy('name_ar')->get();
 
         return view('users.index', compact('users', 'departments'));
@@ -41,8 +42,9 @@ class UserController extends Controller
 
         $departments = Category::query()->where('parent_id', 0)->orderBy('name_ar')->get();
         $selected = $user->managed_department_ids; // accessor on model
+        $managers = $this->managerOptions($user->id);
 
-        return view('users.edit', compact('user', 'departments', 'selected'));
+        return view('users.edit', compact('user', 'departments', 'selected', 'managers'));
     }
 
     /**
@@ -52,25 +54,19 @@ class UserController extends Controller
     {
         $this->ensureAdmin();
         $departments = Category::query()->where('parent_id', 0)->orderBy('name_ar')->get();
-        return view('users.create', compact('departments'));
+        $managers = $this->managerOptions();
+
+        return view('users.create', compact('departments', 'managers'));
     }
 
     /**
      * Store new user (admin only)
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreUserRequest $request): RedirectResponse
     {
         $this->ensureAdmin();
 
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'role' => ['required', 'in:admin,department_manager,sales_rep'],
-            'is_active' => ['sometimes', 'boolean'],
-            'managed_departments' => ['nullable', 'array'],
-            'managed_departments.*' => ['integer', 'exists:categories,id'],
-        ]);
+        $data = $request->validated();
 
         $topLevelIds = Category::query()->where('parent_id', 0)->pluck('id')->all();
         $managed = collect($data['managed_departments'] ?? [])
@@ -87,6 +83,7 @@ class UserController extends Controller
         $user->role = $data['role'];
         $user->is_active = (bool) ($data['is_active'] ?? true);
         $user->managed_departments = $managed;
+        $user->manager_responsible_id = $data['manager_responsible_id'] ?? null;
         $user->save();
 
         return redirect()->route('users.index')->with('success', __('common.saved_successfully'));
@@ -95,15 +92,11 @@ class UserController extends Controller
     /**
      * Update a user (admin only)
      */
-    public function update(Request $request, User $user): RedirectResponse
+    public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
         $this->ensureAdmin();
 
-        $data = $request->validate([
-            'managed_departments' => ['nullable', 'array'],
-            'managed_departments.*' => ['integer', 'exists:categories,id'],
-            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
-        ]);
+        $data = $request->validated();
 
         // Only allow top-level categories
         $topLevelIds = Category::query()->where('parent_id', 0)->pluck('id')->all();
@@ -115,6 +108,9 @@ class UserController extends Controller
             ->all();
 
         $user->managed_departments = $selected;
+        $user->name = $data['name'];
+        $user->email = $data['email'];
+        $user->manager_responsible_id = $data['manager_responsible_id'] ?? null;
         if (!empty($data['password'])) {
             $user->password = bcrypt($data['password']);
         }
@@ -122,5 +118,18 @@ class UserController extends Controller
 
         return redirect()->route('users.index')
             ->with('success', __('common.saved_successfully'));
+    }
+
+    private function managerOptions(?int $excludeId = null)
+    {
+        $query = User::query()
+            ->whereIn('role', ['admin', 'department_manager'])
+            ->orderBy('name');
+
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        return $query->get();
     }
 }

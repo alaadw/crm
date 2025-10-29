@@ -7,6 +7,13 @@ use Illuminate\Validation\Rule;
 
 class UpdateStudentRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('assigned_user_id') && $this->input('assigned_user_id') === '') {
+            $this->merge(['assigned_user_id' => null]);
+        }
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -24,7 +31,7 @@ class UpdateStudentRequest extends FormRequest
     {
         $studentId = $this->route('student')->id ?? $this->route('student');
         
-        return [
+        $rules = [
             'full_name' => 'required|string|max:255',
             'full_name_en' => 'nullable|string|max:255',
             'email' => [
@@ -44,6 +51,25 @@ class UpdateStudentRequest extends FormRequest
             'college' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:1000',
         ];
+
+        $user = $this->user();
+
+        if ($user && method_exists($user, 'isAdmin') && $user->isAdmin()) {
+            $rules['assigned_user_id'] = ['nullable', 'integer', 'exists:users,id'];
+        } elseif ($user && method_exists($user, 'isDepartmentManager') && $user->isDepartmentManager()) {
+            $rules['assigned_user_id'] = [
+                'nullable',
+                'integer',
+                Rule::exists('users', 'id')->where(function ($query) use ($user) {
+                    $query->where('id', $user->id)
+                        ->orWhere('manager_responsible_id', $user->id);
+                }),
+            ];
+        } else {
+            $rules['assigned_user_id'] = ['prohibited'];
+        }
+
+        return $rules;
     }
 
     /**
@@ -71,6 +97,7 @@ class UpdateStudentRequest extends FormRequest
             'major.max' => __('students.major_max'),
             'college.max' => __('students.college_max'),
             'notes.max' => __('students.notes_max'),
+            'assigned_user_id.prohibited' => __('students.assigned_user_prohibited'),
         ];
     }
 
@@ -93,6 +120,7 @@ class UpdateStudentRequest extends FormRequest
             'major' => __('students.major'),
             'college' => __('students.college'),
             'notes' => __('students.notes'),
+            'assigned_user_id' => __('students.assigned_user'),
         ];
     }
 }
